@@ -1,0 +1,934 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Himmelur</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ett kort-stykke for tid/sted, døgnkurve i full bredde, sol- og månepanel side om side (stablet på mobil) */
+:root{
+  --bg:#ECEFF4; --surface:#F9FAFC; --ink:#1A2132; --muted:#5B6476; --line:#D2D8E2;
+  --sun:#B8661A; --sun-soft:#F3DFC6; --moon:#4F5F92; --moon-soft:#DCE1F0; --night:#DFE3EC;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1320; --surface:#161D2C; --ink:#E5E8EF; --muted:#8C95A8; --line:#283246;
+  --sun:#F0A23C; --sun-soft:#3A2C1C; --moon:#A9B7E0; --moon-soft:#262F48; --night:#121827; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1320; --surface:#161D2C; --ink:#E5E8EF; --muted:#8C95A8; --line:#283246;
+  --sun:#F0A23C; --sun-soft:#3A2C1C; --moon:#A9B7E0; --moon-soft:#262F48; --night:#121827; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.label{font-size:11.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+
+/* Topp */
+.top{display:grid;grid-template-columns:1fr auto;gap:14px 20px;align-items:end}
+.brand{font-family:var(--display);font-weight:700;font-size:clamp(28px,6vw,40px);letter-spacing:-.02em;line-height:1;margin:0}
+.brand span{color:var(--sun)} .brand em{font-style:normal;color:var(--moon)}
+.ver{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px;vertical-align:super}
+.where{position:relative;min-width:0}
+.where input{width:100%;box-sizing:border-box;font:500 15px var(--body);color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 36px;width:min(320px,100%)}
+.where input:focus{outline:2px solid var(--moon);outline-offset:1px}
+.where svg{position:absolute;left:11px;top:11px;width:16px;height:16px;color:var(--muted);pointer-events:none}
+.sugg{position:absolute;z-index:20;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 10px 30px rgba(10,15,30,.18);overflow:hidden;margin:0;padding:4px;list-style:none}
+.sugg li button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border-radius:7px;cursor:pointer}
+.sugg li button:hover,.sugg li button:focus-visible,.sugg li button.act{background:var(--moon-soft)}
+.sugg small{color:var(--muted)}
+.err{color:#C0392B;font-size:13px;margin:6px 0 0}
+.coord{grid-column:1/-1;color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.coord b{color:var(--ink);font-weight:600}
+@media (max-width:640px){.top{grid-template-columns:1fr}.where input{width:100%}}
+
+/* Tid */
+.when{position:relative}
+.timebtn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 18px;
+  width:100%;padding:14px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.timebtn:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+.timebtn:hover{border-color:var(--moon)}
+.clock{font-family:var(--mono);font-size:clamp(34px,8vw,52px);font-weight:500;letter-spacing:-.03em;line-height:1}
+.datestr{font-family:var(--display);font-weight:500;font-size:clamp(17px,3.4vw,22px)}
+.datestr svg{width:17px;height:17px;vertical-align:-2px;margin-left:6px;color:var(--moon)}
+.tzline{flex-basis:100%;font-size:12.5px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--body);padding:3px 9px;border-radius:99px;
+  background:var(--sun-soft);color:var(--sun);margin-left:2px}
+.resetbtn{font:600 13px var(--body);color:var(--surface);background:var(--moon);border:0;border-radius:8px;padding:7px 12px;cursor:pointer}
+.resetbtn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.timerow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.daybtn{all:unset;box-sizing:border-box;cursor:pointer;width:48px;display:grid;place-items:center;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--moon)}
+.daybtn svg{width:22px;height:22px}
+.daybtn:hover{border-color:var(--moon);background:var(--moon-soft)}
+.daybtn:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+@media (max-width:420px){.daybtn{width:40px}}
+.whenrow{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.whenrow[hidden]{display:none!important}
+
+/* Kalender */
+.cal{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:min(340px,100%);box-sizing:border-box;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(10,15,30,.25);padding:12px}
+.calhead{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.calhead .ttl{flex:1;text-align:center;font-family:var(--display);font-weight:700;font-size:17px;text-transform:capitalize}
+.ib{all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--ink);font-family:var(--mono)}
+.ib:hover{background:var(--moon-soft)} .ib:focus-visible{outline:2px solid var(--moon)}
+.grid{display:grid;grid-template-columns:28px repeat(7,1fr);gap:2px;text-align:center}
+.grid .h{font-size:11px;color:var(--muted);font-weight:600;padding:4px 0;text-transform:uppercase}
+.grid .wk{font-family:var(--mono);font-size:11px;color:var(--muted);align-self:center}
+.grid button{all:unset;cursor:pointer;height:34px;border-radius:8px;font-family:var(--mono);font-size:13.5px;display:grid;place-items:center}
+.grid button:hover{background:var(--moon-soft)} .grid button:focus-visible{outline:2px solid var(--moon)}
+.grid button.out{color:var(--muted);opacity:.55}
+.grid button.today{box-shadow:inset 0 0 0 1.5px var(--sun)}
+.grid button.sel{background:var(--moon);color:var(--surface)}
+.calfoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+.calfoot button.link{all:unset;cursor:pointer;font-size:13px;color:var(--muted);padding:6px}
+.calfoot button.link:focus-visible{outline:2px solid var(--moon)}
+
+/* Døgnkurve */
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px}
+.chartbox .lg{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;margin-bottom:6px;font-size:12.5px;color:var(--muted)}
+.chartbox .lg i{display:inline-block;width:18px;height:0;border-top:2.5px solid var(--sun);vertical-align:middle;margin-right:6px}
+.chartbox .lg i.m{border-top:2.5px dashed var(--moon)}
+.chartbox .lg .grow{flex:1}
+.svgwrap{overflow-x:auto}
+#chart{width:100%;height:auto;display:block;min-width:300px}
+
+/* Paneler */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:720px){.panels{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.ph{display:flex;align-items:center;gap:10px}
+.ph h2{margin:0;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em}
+.ph .dot{width:12px;height:12px;border-radius:50%;background:var(--sun)}
+.panel.moon .ph .dot{background:var(--moon)}
+.hero{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.hero .big{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.02em;line-height:1.1}
+.hero .sub{font-size:13px;color:var(--muted)}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;margin:0}
+.rows dt{color:var(--muted);font-size:14px}
+.rows dd{margin:0;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px}
+.rows dd small{color:var(--muted);font-family:var(--body);font-size:12px;margin-left:4px}
+.rows .sep{grid-column:1/-1;border-top:1px dashed var(--line);margin:2px 0}
+.up{color:var(--sun)} .panel.moon .up{color:var(--moon)}
+#phaseSvg{width:64px;height:64px;flex:none}
+.mut{color:var(--muted)}
+footer{font-size:12.5px;color:var(--muted);line-height:1.55;max-width:70ch}
+footer p{margin:0 0 6px}
+@media (prefers-reduced-motion: no-preference){ .panel,.chartbox{transition:border-color .2s} }
+/* ---- v1.2 ---- */
+[hidden]{display:none!important}
+.brandrow{display:flex;align-items:center;gap:12px}
+.infobtn{all:unset;box-sizing:border-box;cursor:pointer;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);
+  display:grid;place-items:center;font:700 16px var(--display);color:var(--muted);background:var(--surface)}
+.infobtn:hover{border-color:var(--moon);color:var(--moon)} .infobtn:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+.timerow{position:relative}
+.cal{width:min(460px,100%);left:50%;transform:translateX(-50%);padding:16px}
+.calhead .ttl{font-size:20px} .ib{width:38px;height:38px;font-size:17px}
+.grid{grid-template-columns:34px repeat(7,1fr);gap:4px}
+.grid button{height:46px;font-size:15.5px} .grid .h,.grid .wk{font-size:12px}
+.calfoot button.link{font-size:14px}
+/* Årsslider */
+.yearbar{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px 8px;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.ybhead{display:flex;justify-content:space-between;align-items:center;gap:6px 10px;min-height:32px;flex-wrap:wrap}
+.ybhead .mut{font-size:12px}
+.whenrow{margin-top:0;gap:8px}
+.ybtrack{position:relative;height:58px}
+.ybtrack:has(#yslider:focus-visible){outline:2px solid var(--moon);outline-offset:3px;border-radius:6px}
+#ybSvg{position:absolute;top:0;left:9px;width:calc(100% - 18px);height:100%;display:block}
+#yslider{-webkit-appearance:none;appearance:none;position:absolute;inset:0;width:100%;height:100%;margin:0;background:transparent;cursor:ew-resize}
+#yslider:focus{outline:none}
+#yslider::-webkit-slider-runnable-track{height:58px;background:transparent;border:0}
+#yslider::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:18px;height:58px;border-radius:7px;background:transparent;
+  border:2.5px solid var(--moon);box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(0,0,0,.25)}
+#yslider::-moz-range-track{height:58px;background:transparent;border:0}
+#yslider::-moz-range-thumb{box-sizing:border-box;width:18px;height:58px;border-radius:7px;background:transparent;
+  border:2.5px solid var(--moon);box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(0,0,0,.25)}
+.ybmonths{position:relative;height:16px;margin:0 9px;font-size:11px;color:var(--muted)}
+.ybmonths span{position:absolute;top:0;padding-left:3px;white-space:nowrap}
+/* Symmetriske verdirader: etikett | verdi (høyrejustert) | merknad */
+.rows{grid-template-columns:minmax(0,1fr) auto 104px;gap:9px 12px;align-items:baseline}
+.rows dd{white-space:nowrap}
+.rows dd.n{font-family:var(--body);font-size:12px;color:var(--muted);text-align:left;white-space:normal}
+@media (max-width:420px){.rows{grid-template-columns:minmax(0,1fr) auto 88px;gap:9px 8px}.rows dt{font-size:13.5px}}
+.hero{min-height:72px}
+.hero .big{font-size:26px}
+#dialSvg{width:64px;height:64px;flex:none}
+@media (max-width:480px){.datestr svg{display:none}}
+/* Info-vindu */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(8,12,24,.55);display:grid;place-items:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.mbox{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:580px;max-height:100%;overflow:auto;box-sizing:border-box;padding:18px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.mhead h2{margin:0;font-family:var(--display);font-size:22px}
+.mbox h3{font-family:var(--display);font-size:15px;margin:16px 0 6px}
+.mbox p,.mbox li{font-size:14px;line-height:1.55;max-width:65ch}
+.mbox p{margin:0 0 8px} .mbox ul{margin:0 0 8px;padding-left:20px}
+.mbox kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px}
+.vlog{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}
+.vlog b{font-family:var(--mono);font-weight:500}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.3</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
+    <div class="where">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <input id="city" type="text" autocomplete="off" spellcheck="false" placeholder="Skriv nærmeste by …" aria-label="Nærmeste by eller koordinater">
+      <ul class="sugg" id="sugg" hidden></ul>
+      <p class="err" id="err" hidden></p>
+    </div>
+    <div class="coord" id="coord"></div>
+  </div>
+
+  <div class="when">
+    <div class="timerow">
+      <button class="daybtn" id="prevday" aria-label="Forrige dag" title="Forrige dag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="timebtn" id="timebtn" aria-haspopup="dialog" aria-expanded="false">
+        <span class="clock" id="clock">--:--:--</span>
+        <span class="datestr"><span id="datestr">–</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+        <span class="tzline" id="tzline"></span>
+      </button>
+      <button class="daybtn" id="nextday" aria-label="Neste dag" title="Neste dag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="cal" id="cal" role="dialog" aria-label="Velg dato" hidden>
+        <div class="calhead">
+          <button class="ib" id="py" aria-label="Forrige år">«</button>
+          <button class="ib" id="pm" aria-label="Forrige måned">‹</button>
+          <div class="ttl" id="calttl"></div>
+          <button class="ib" id="nm" aria-label="Neste måned">›</button>
+          <button class="ib" id="ny" aria-label="Neste år">»</button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="calfoot">
+          <button class="link" id="calclose">Lukk</button>
+          <button class="resetbtn" id="caltoday">I dag</button>
+        </div>
+      </div>
+    </div>
+    <div class="yearbar">
+      <div class="ybhead">
+        <span><span class="label">Året <span class="num" id="ybYear"></span> · dag <span class="num" id="ybDoy"></span></span> <span class="mut">· kurven viser daglengde</span></span>
+        <span class="whenrow" id="whenrow" hidden><span class="chip">Viser valgt dato</span><button class="resetbtn" id="reset">Tilbake til i dag</button></span>
+      </div>
+      <div class="ybtrack">
+        <svg id="ybSvg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <input type="range" id="yslider" min="1" max="365" step="1" value="1" aria-label="Dag i året">
+      </div>
+      <div class="ybmonths" id="ybMonths" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <section class="chartbox" aria-label="Høyde over horisonten gjennom døgnet">
+    <div class="lg"><span class="label">Høyde gjennom døgnet</span><span class="grow"></span><span><i></i>Sol</span><span><i class="m"></i>Måne</span></div>
+    <div class="svgwrap"><svg id="chart" viewBox="0 0 720 230" role="img" aria-label="Sol- og månehøyde over døgnet"></svg></div>
+  </section>
+
+  <div class="panels">
+    <section class="panel sun">
+      <div class="ph"><span class="dot"></span><h2>Sol</h2></div>
+      <div class="hero">
+        <svg id="dialSvg" viewBox="-34 -34 68 68" aria-hidden="true"></svg>
+        <div>
+          <div class="label">Daglengde</div>
+          <div class="big" id="daylen">–</div>
+          <div class="sub" id="daydiff"></div>
+        </div>
+      </div>
+      <dl class="rows" id="sRows"></dl>
+    </section>
+
+    <section class="panel moon">
+      <div class="ph"><span class="dot"></span><h2>Måne</h2></div>
+      <div class="hero">
+        <svg id="phaseSvg" viewBox="-34 -34 68 68" aria-hidden="true"></svg>
+        <div>
+          <div class="label">Månefase</div>
+          <div class="big" style="font-family:var(--display);font-size:24px;font-weight:700" id="phName">–</div>
+          <div class="sub" id="phSub"></div>
+        </div>
+      </div>
+      <dl class="rows" id="mRows"></dl>
+    </section>
+  </div>
+
+  <div class="modal" id="info" hidden>
+    <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="infottl">
+      <div class="mhead"><h2 id="infottl">Om Himmelur</h2><button class="ib" id="infoclose" aria-label="Lukk">✕</button></div>
+      <h3>Slik bruker du appen</h3>
+      <ul>
+        <li><b>Sted:</b> skriv nærmeste by og trykk Enter, eller velg fra listen. Finner du ikke byen, skriv koordinater, for eksempel <span class="num">62.47, 6.15</span>.</li>
+        <li><b>Dato:</b> trykk på klokken for å åpne kalenderen, bruk pilknappene ‹ › for én dag om gangen, eller dra årsslideren.</li>
+        <li><b>Tastatur:</b> <kbd>←</kbd> <kbd>→</kbd> blar én dag. På slideren flytter <kbd>Page Up</kbd> og <kbd>Page Down</kbd> lengre steg.</li>
+        <li><b>Tilbake til i dag:</b> knappen dukker opp ved slideren når en annen dato er valgt.</li>
+      </ul>
+      <h3>Beregninger</h3>
+      <p>Tidene gjelder valgt sted og vises i stedets lokale tid. Oppgang og nedgang regnes når øvre kant av sol eller måne passerer horisonten, med normal atmosfærisk lysbrytning. Høyder er tilsynelatende høyder (med lysbrytning). Månens høyde er korrigert for parallakse.</p>
+      <p>Posisjonene beregnes med algoritmer fra Jean Meeus, <i>Astronomical Algorithms</i>. Nøyaktigheten er normalt innenfor ett minutt og 0,1°.</p>
+      <p>Slideren viser daglengden gjennom hele året. Den tynne loddrette streken markerer dagens dato.</p>
+      <h3>Byer</h3>
+      <p>Byer søkes i en innebygd liste med norske og store utenlandske byer. Appen henter ikke data fra nettet.</p>
+      <h3>Versjoner</h3>
+      <div class="vlog">
+        <b>v1.3</b><span>Nytt navn: Himmelur (tidligere Sol &amp; Måne).</span>
+        <b>v1.2</b><span>Årsslider med daglengdekurve, større kalender, symmetriske verdikolonner, døgnskive for sola, neste solverv og jevndøgn, info-vindu.</span>
+        <b>v1.1</b><span>Pilknapper for forrige og neste dag.</span>
+        <b>v1.0</b><span>Første versjon.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Astronomi-kjerne (Meeus, Astronomical Algorithms, kap. 25 og 47) ----
+const RAD = Math.PI / 180, DEG = 180 / Math.PI;
+const sin = x => Math.sin(x * RAD), cos = x => Math.cos(x * RAD);
+const n360 = x => ((x % 360) + 360) % 360;
+const DELTA_T = 69.2; // TT - UT, sekunder
+const jdOf = ms => ms / 86400000 + 2440587.5;
+
+function obliq(T, om) {
+  const e0 = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
+  return e0 + 0.00256 * cos(om);
+}
+
+function sunPos(ms) {
+  const T = (jdOf(ms + DELTA_T * 1000) - 2451545) / 36525;
+  const L0 = n360(280.46646 + T * (36000.76983 + 0.0003032 * T));
+  const M = n360(357.52911 + T * (35999.05029 - 0.0001537 * T));
+  const e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
+  const C = (1.914602 - T * (0.004817 + 0.000014 * T)) * sin(M)
+    + (0.019993 - 0.000101 * T) * sin(2 * M) + 0.000289 * sin(3 * M);
+  const om = 125.04 - 1934.136 * T;
+  const lon = L0 + C - 0.00569 - 0.00478 * sin(om);
+  const eps = obliq(T, om);
+  const ra = n360(Math.atan2(cos(eps) * sin(lon), cos(lon)) * DEG);
+  const dec = Math.asin(sin(eps) * sin(lon)) * DEG;
+  const R = 1.000001018 * (1 - e * e) / (1 + e * cos(M + C));
+  return { ra, dec, lon: n360(lon), dist: R * 149597870.7 };
+}
+
+// [D, M, M', F, Σl, Σr]
+const MLR = [
+  [0,0,1,0,6288774,-20905355],[2,0,-1,0,1274027,-3699111],[2,0,0,0,658314,-2955968],
+  [0,0,2,0,213618,-569925],[0,1,0,0,-185116,48888],[0,0,0,2,-114332,-3149],
+  [2,0,-2,0,58793,246158],[2,-1,-1,0,57066,-152138],[2,0,1,0,53322,-170733],
+  [2,-1,0,0,45758,-204586],[0,1,-1,0,-40923,-129620],[1,0,0,0,-34720,108743],
+  [0,1,1,0,-30383,104755],[2,0,0,-2,15327,10321],[0,0,1,2,-12528,0],
+  [0,0,1,-2,10980,79661],[4,0,-1,0,10675,-34782],[0,0,3,0,10034,-23210],
+  [4,0,-2,0,8548,-21636],[2,1,-1,0,-7888,24208],[2,1,0,0,-6766,30824],
+  [1,0,-1,0,-5163,-8379],[1,1,0,0,4987,-16675],[2,-1,1,0,4036,-12831],
+  [2,0,2,0,3994,-10445],[4,0,0,0,3861,-11650],[2,0,-3,0,3665,14403],
+  [0,1,-2,0,-2689,-7003],[2,0,-1,2,-2602,0],[2,-1,-2,0,2390,10056],
+  [1,0,1,0,-2348,6322],[2,-2,0,0,2236,-9884],[0,1,2,0,-2120,5751],
+  [0,2,0,0,-2069,0],[2,-2,-1,0,2048,-4950],[2,0,1,-2,-1773,4130],
+  [2,0,0,2,-1595,0],[4,-1,-1,0,1215,-3958],[0,0,2,2,-1110,0],
+  [3,0,-1,0,-892,3258],[2,1,1,0,-810,2616],[4,-1,-2,0,759,-1897],
+  [0,2,-1,0,-713,-2117],[2,2,-1,0,-700,2354]
+];
+// [D, M, M', F, Σb]
+const MB = [
+  [0,0,0,1,5128122],[0,0,1,1,280602],[0,0,1,-1,277693],[2,0,0,-1,173237],
+  [2,0,-1,1,55413],[2,0,-1,-1,46271],[2,0,0,1,32573],[0,0,2,1,17198],
+  [2,0,1,-1,9266],[0,0,2,-1,8822],[2,-1,0,-1,8216],[2,0,-2,-1,4324],
+  [2,0,1,1,4200],[2,1,0,-1,-3359],[2,-1,-1,1,2463],[2,-1,0,1,2211],
+  [2,-1,-1,-1,2065],[0,1,-1,-1,-1870],[4,0,-1,-1,1828],[0,1,0,1,-1794],
+  [0,0,0,3,-1749],[0,1,-1,1,-1565],[1,0,0,1,-1491],[0,1,1,1,-1475],
+  [0,1,1,-1,-1410],[0,1,0,-1,-1344],[1,0,0,-1,-1335]
+];
+
+function moonPos(ms) {
+  const T = (jdOf(ms + DELTA_T * 1000) - 2451545) / 36525;
+  const Lp = n360(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T);
+  const D = n360(297.8501921 + 445267.1114034 * T - 0.0018819 * T * T);
+  const M = n360(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T);
+  const Mp = n360(134.9633964 + 477198.8675055 * T + 0.0087414 * T * T);
+  const F = n360(93.2720950 + 483202.0175233 * T - 0.0036539 * T * T);
+  const A1 = 119.75 + 131.849 * T, A2 = 53.09 + 479264.290 * T, A3 = 313.45 + 481266.484 * T;
+  const E = 1 - 0.002516 * T - 0.0000074 * T * T;
+  let sl = 0, sr = 0, sb = 0;
+  for (const [d, m, mp, f, l, r] of MLR) {
+    const a = d * D + m * M + mp * Mp + f * F;
+    const k = m === 0 ? 1 : Math.abs(m) === 1 ? E : E * E;
+    sl += l * k * sin(a); sr += r * k * cos(a);
+  }
+  for (const [d, m, mp, f, b] of MB) {
+    const k = m === 0 ? 1 : Math.abs(m) === 1 ? E : E * E;
+    sb += b * k * sin(d * D + m * M + mp * Mp + f * F);
+  }
+  sl += 3958 * sin(A1) + 1962 * sin(Lp - F) + 318 * sin(A2);
+  sb += -2235 * sin(Lp) + 382 * sin(A3) + 175 * sin(A1 - F) + 175 * sin(A1 + F)
+    + 127 * sin(Lp - Mp) - 115 * sin(Lp + Mp);
+  const om = 125.04452 - 1934.136261 * T;
+  const lon = n360(Lp + sl / 1e6 - 0.00478 * sin(om));
+  const lat = sb / 1e6;
+  const dist = 385000.56 + sr / 1000;
+  const eps = obliq(T, om);
+  const ra = n360(Math.atan2(sin(lon) * cos(eps) - Math.tan(lat * RAD) * sin(eps), cos(lon)) * DEG);
+  const dec = Math.asin(sin(lat) * cos(eps) + cos(lat) * sin(eps) * sin(lon)) * DEG;
+  return { ra, dec, lon, lat, dist };
+}
+
+function gmst(ms) {
+  const JD = jdOf(ms), T = (JD - 2451545) / 36525;
+  return n360(280.46061837 + 360.98564736629 * (JD - 2451545) + 0.000387933 * T * T - T * T * T / 38710000);
+}
+
+// Horisontale koordinater (geometrisk høyde, topocentrisk for månen)
+function horizontal(p, ms, lat, lon, isMoon) {
+  let H = n360(gmst(ms) + lon - p.ra); if (H > 180) H -= 360;
+  let alt = Math.asin(sin(lat) * sin(p.dec) + cos(lat) * cos(p.dec) * cos(H)) * DEG;
+  const az = n360(Math.atan2(sin(H), cos(H) * sin(lat) - Math.tan(p.dec * RAD) * cos(lat)) * DEG + 180);
+  if (isMoon) alt -= Math.asin(6378.14 / p.dist) * DEG * cos(alt); // parallakse
+  return { alt, az, H };
+}
+
+// Atmosfærisk refraksjon (Sæmundsson), grader
+function refract(h) {
+  if (h < -1.5) return h;
+  const hh = Math.max(h, -1);
+  return h + 1.02 / Math.tan((hh + 10.3 / (hh + 5.11)) * RAD) / 60;
+}
+
+const sunH = (ms, lat, lon) => horizontal(sunPos(ms), ms, lat, lon, false);
+const moonH = (ms, lat, lon) => horizontal(moonPos(ms), ms, lat, lon, true);
+
+// Hendelser for et døgn [t0, t1): oppgang, nedgang, meridian, tid over horisont
+function dayEvents(t0, t1, lat, lon, isMoon) {
+  const fn = isMoon ? moonH : sunH;
+  // h0: senterets høyde ved oppgang/nedgang (øvre kant + refraksjon)
+  const h0 = ms => isMoon ? -(0.5667 + Math.asin(1737.4 / moonPos(ms).dist) * DEG) : -0.8333;
+  const f = ms => fn(ms, lat, lon).alt - h0(ms);
+  const STEP = 10 * 60000;
+  const rises = [], sets = [], transits = [];
+  let above = 0;
+  let pt = t0, pf = f(t0), pH = fn(t0, lat, lon).H;
+  const bis = (a, b, g) => { let ga = g(a); for (let i = 0; i < 22; i++) { const m = (a + b) / 2, gm = g(m); if ((gm > 0) === (ga > 0)) { a = m; ga = gm; } else b = m; } return (a + b) / 2; };
+  for (let t = t0 + STEP; pt < t1; t += STEP) {
+    const tt = Math.min(t, t1);
+    const cf = f(tt), cH = fn(tt, lat, lon).H;
+    if (pf <= 0 && cf > 0) { const x = bis(pt, tt, f); rises.push(x); above += tt - x; }
+    else if (pf > 0 && cf <= 0) { const x = bis(pt, tt, f); sets.push(x); above += x - pt; }
+    else if (pf > 0) above += tt - pt;
+    if (pH < 0 && cH >= 0 && cH - pH < 90) transits.push(bis(pt, tt, ms => fn(ms, lat, lon).H));
+    pt = tt; pf = cf; pH = cH;
+  }
+  const tr = transits.map(t => ({ t, alt: refract(fn(t, lat, lon).alt) }));
+  return { rises, sets, transits: tr, above, alwaysUp: !rises.length && !sets.length && f(t0) > 0 };
+}
+
+// Månefase
+function moonPhase(ms) {
+  const s = sunPos(ms), m = moonPos(ms);
+  const elong = n360(m.lon - s.lon);
+  const psi = Math.acos(cos(m.lat) * cos(m.lon - s.lon));
+  const i = Math.atan2(s.dist * Math.sin(psi), m.dist - s.dist * Math.cos(psi));
+  const illum = (1 + Math.cos(i)) / 2;
+  return { elong, illum, waxing: elong < 180, age: elong / 360 * 29.530589 };
+}
+
+// Neste tidspunkt elongasjonen passerer target (0 = nymåne, 180 = fullmåne)
+function nextPhase(ms, target) {
+  const g = t => { let d = moonPhase(t).elong - target; if (d > 180) d -= 360; if (d < -180) d += 360; return d; };
+  const step = 6 * 3600000;
+  let a = ms, ga = g(a);
+  for (let k = 0; k < 140; k++) {
+    const b = a + step, gb = g(b);
+    if (ga < 0 && gb >= 0) {
+      let lo = a, hi = b;
+      for (let j = 0; j < 30; j++) { const mid = (lo + hi) / 2; if (g(mid) < 0) lo = mid; else hi = mid; }
+      return (lo + hi) / 2;
+    }
+    a = b; ga = gb;
+  }
+  return null;
+}
+
+
+
+// ---- Byer: navn, region, bredde, lengde, tidssone ----
+const O = "Europe/Oslo";
+const CITIES = [
+ ["Oslo","Oslo",59.913,10.752,O],["Bergen","Vestland",60.391,5.322,O],["Trondheim","Trøndelag",63.430,10.395,O],
+ ["Stavanger","Rogaland",58.970,5.733,O],["Kristiansand","Agder",58.146,7.996,O],["Tromsø","Troms",69.649,18.955,O],
+ ["Drammen","Buskerud",59.744,10.205,O],["Fredrikstad","Østfold",59.218,10.930,O],["Sandnes","Rogaland",58.852,5.735,O],
+ ["Ålesund","Møre og Romsdal",62.472,6.149,O],["Bodø","Nordland",67.280,14.405,O],["Sarpsborg","Østfold",59.284,11.110,O],
+ ["Skien","Telemark",59.209,9.609,O],["Haugesund","Rogaland",59.413,5.268,O],["Tønsberg","Vestfold",59.267,10.407,O],
+ ["Moss","Østfold",59.434,10.658,O],["Porsgrunn","Telemark",59.141,9.656,O],["Arendal","Agder",58.461,8.772,O],
+ ["Hamar","Innlandet",60.794,11.068,O],["Larvik","Vestfold",59.054,10.027,O],["Halden","Østfold",59.124,11.387,O],
+ ["Lillehammer","Innlandet",61.115,10.466,O],["Molde","Møre og Romsdal",62.737,7.161,O],["Harstad","Troms",68.799,16.541,O],
+ ["Gjøvik","Innlandet",60.795,10.692,O],["Kongsberg","Buskerud",59.665,9.650,O],["Narvik","Nordland",68.438,17.427,O],
+ ["Alta","Finnmark",69.969,23.272,O],["Hammerfest","Finnmark",70.663,23.682,O],["Kirkenes","Finnmark",69.727,30.045,O],
+ ["Vadsø","Finnmark",70.074,29.750,O],["Vardø","Finnmark",70.371,31.110,O],["Honningsvåg","Finnmark",70.982,25.970,O],
+ ["Lakselv","Finnmark",70.051,24.971,O],["Karasjok","Finnmark",69.472,25.511,O],["Kautokeino","Finnmark",69.012,23.041,O],
+ ["Mo i Rana","Nordland",66.313,14.142,O],["Mosjøen","Nordland",65.837,13.191,O],["Sandnessjøen","Nordland",66.021,12.632,O],
+ ["Brønnøysund","Nordland",65.474,12.212,O],["Svolvær","Nordland",68.234,14.568,O],["Leknes","Nordland",68.147,13.612,O],
+ ["Sortland","Nordland",68.696,15.413,O],["Finnsnes","Troms",69.229,17.982,O],["Steinkjer","Trøndelag",64.014,11.495,O],
+ ["Levanger","Trøndelag",63.746,11.300,O],["Stjørdal","Trøndelag",63.470,10.917,O],["Namsos","Trøndelag",64.466,11.495,O],
+ ["Røros","Trøndelag",62.574,11.384,O],["Oppdal","Trøndelag",62.594,9.691,O],["Kristiansund","Møre og Romsdal",63.110,7.728,O],
+ ["Ørsta","Møre og Romsdal",62.199,6.130,O],["Førde","Vestland",61.452,5.857,O],["Florø","Vestland",61.600,5.032,O],
+ ["Sogndal","Vestland",61.229,7.100,O],["Stryn","Vestland",61.903,6.715,O],["Voss","Vestland",60.628,6.416,O],
+ ["Odda","Vestland",60.069,6.546,O],["Leirvik","Vestland",59.780,5.500,O],["Egersund","Rogaland",58.451,6.002,O],
+ ["Flekkefjord","Agder",58.297,6.663,O],["Mandal","Agder",58.029,7.461,O],["Grimstad","Agder",58.341,8.594,O],
+ ["Notodden","Telemark",59.560,9.258,O],["Elverum","Innlandet",60.881,11.564,O],["Kongsvinger","Innlandet",60.190,11.998,O],
+ ["Fagernes","Innlandet",60.986,9.232,O],["Geilo","Buskerud",60.534,8.206,O],["Hønefoss","Buskerud",60.168,10.257,O],
+ ["Asker","Akershus",59.833,10.433,O],["Sandvika","Akershus",59.889,10.524,O],["Lillestrøm","Akershus",59.956,11.050,O],
+ ["Ski","Akershus",59.719,10.836,O],["Jessheim","Akershus",60.142,11.175,O],["Horten","Vestfold",59.417,10.483,O],
+ ["Sandefjord","Vestfold",59.131,10.216,O],["Longyearbyen","Svalbard",78.223,15.647,"Arctic/Longyearbyen"],
+ ["Stockholm","Sverige",59.329,18.069,"Europe/Stockholm"],["Göteborg","Sverige",57.709,11.975,"Europe/Stockholm"],
+ ["Malmö","Sverige",55.605,13.003,"Europe/Stockholm"],["Luleå","Sverige",65.584,22.155,"Europe/Stockholm"],
+ ["Kiruna","Sverige",67.856,20.225,"Europe/Stockholm"],["Östersund","Sverige",63.179,14.636,"Europe/Stockholm"],
+ ["Karlstad","Sverige",59.402,13.511,"Europe/Stockholm"],["Umeå","Sverige",63.826,20.263,"Europe/Stockholm"],
+ ["København","Danmark",55.676,12.568,"Europe/Copenhagen"],["Aarhus","Danmark",56.163,10.204,"Europe/Copenhagen"],
+ ["Aalborg","Danmark",57.048,9.919,"Europe/Copenhagen"],["Helsinki","Finland",60.170,24.938,"Europe/Helsinki"],
+ ["Rovaniemi","Finland",66.503,25.729,"Europe/Helsinki"],["Oulu","Finland",65.012,25.465,"Europe/Helsinki"],
+ ["Reykjavík","Island",64.147,-21.942,"Atlantic/Reykjavik"],["Tórshavn","Færøyene",62.010,-6.772,"Atlantic/Faroe"],
+ ["Nuuk","Grønland",64.181,-51.694,"America/Nuuk"],["London","Storbritannia",51.507,-0.128,"Europe/London"],
+ ["Aberdeen","Storbritannia",57.150,-2.094,"Europe/London"],["Edinburgh","Storbritannia",55.953,-3.188,"Europe/London"],
+ ["Dublin","Irland",53.350,-6.260,"Europe/Dublin"],["Paris","Frankrike",48.857,2.352,"Europe/Paris"],
+ ["Berlin","Tyskland",52.520,13.405,"Europe/Berlin"],["Hamburg","Tyskland",53.551,9.994,"Europe/Berlin"],
+ ["München","Tyskland",48.135,11.582,"Europe/Berlin"],["Amsterdam","Nederland",52.368,4.904,"Europe/Amsterdam"],
+ ["Rotterdam","Nederland",51.924,4.478,"Europe/Amsterdam"],["Brussel","Belgia",50.850,4.352,"Europe/Brussels"],
+ ["Wien","Østerrike",48.208,16.373,"Europe/Vienna"],["Zürich","Sveits",47.377,8.541,"Europe/Zurich"],
+ ["Roma","Italia",41.903,12.496,"Europe/Rome"],["Milano","Italia",45.464,9.190,"Europe/Rome"],
+ ["Madrid","Spania",40.417,-3.704,"Europe/Madrid"],["Barcelona","Spania",41.385,2.173,"Europe/Madrid"],
+ ["Alicante","Spania",38.345,-0.481,"Europe/Madrid"],["Malaga","Spania",36.721,-4.421,"Europe/Madrid"],
+ ["Las Palmas","Gran Canaria",28.124,-15.430,"Atlantic/Canary"],["Santa Cruz","Tenerife",28.464,-16.252,"Atlantic/Canary"],
+ ["Lisboa","Portugal",38.722,-9.139,"Europe/Lisbon"],["Athen","Hellas",37.984,23.728,"Europe/Athens"],
+ ["Istanbul","Tyrkia",41.008,28.978,"Europe/Istanbul"],["Warszawa","Polen",52.230,21.012,"Europe/Warsaw"],
+ ["Gdańsk","Polen",54.352,18.646,"Europe/Warsaw"],["Praha","Tsjekkia",50.076,14.438,"Europe/Prague"],
+ ["Budapest","Ungarn",47.498,19.040,"Europe/Budapest"],["Tallinn","Estland",59.437,24.754,"Europe/Tallinn"],
+ ["Riga","Latvia",56.950,24.105,"Europe/Riga"],["Vilnius","Litauen",54.687,25.280,"Europe/Vilnius"],
+ ["Murmansk","Russland",68.970,33.075,"Europe/Moscow"],["New York","USA",40.713,-74.006,"America/New_York"],
+ ["Chicago","USA",41.878,-87.630,"America/Chicago"],["Houston","USA",29.760,-95.370,"America/Chicago"],
+ ["Los Angeles","USA",34.052,-118.244,"America/Los_Angeles"],["Anchorage","USA",61.218,-149.900,"America/Anchorage"],
+ ["Toronto","Canada",43.653,-79.383,"America/Toronto"],["Rio de Janeiro","Brasil",-22.907,-43.173,"America/Sao_Paulo"],
+ ["Buenos Aires","Argentina",-34.604,-58.382,"America/Argentina/Buenos_Aires"],["Cape Town","Sør-Afrika",-33.925,18.424,"Africa/Johannesburg"],
+ ["Nairobi","Kenya",-1.292,36.822,"Africa/Nairobi"],["Kairo","Egypt",30.044,31.236,"Africa/Cairo"],
+ ["Dubai","De forente arabiske emirater",25.205,55.271,"Asia/Dubai"],["Mumbai","India",19.076,72.878,"Asia/Kolkata"],
+ ["Bangalore","India",12.972,77.595,"Asia/Kolkata"],["Delhi","India",28.614,77.209,"Asia/Kolkata"],
+ ["Bangkok","Thailand",13.756,100.502,"Asia/Bangkok"],["Singapore","Singapore",1.352,103.820,"Asia/Singapore"],
+ ["Beijing","Kina",39.904,116.407,"Asia/Shanghai"],["Shanghai","Kina",31.230,121.474,"Asia/Shanghai"],
+ ["Tokyo","Japan",35.676,139.650,"Asia/Tokyo"],["Seoul","Sør-Korea",37.566,126.978,"Asia/Seoul"],
+ ["Sydney","Australia",-33.869,151.209,"Australia/Sydney"],["Perth","Australia",-31.950,115.861,"Australia/Perth"],
+ ["Auckland","New Zealand",-36.848,174.763,"Pacific/Auckland"]
+];
+
+// ---- Hjelpere ----
+const $ = id => document.getElementById(id);
+const norm = s => s.toLowerCase().replace(/ø/g,"o").replace(/æ/g,"ae").replace(/å/g,"a").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+const fmtCache = {};
+function fmt(tz, opts){ const k = tz + JSON.stringify(opts); return fmtCache[k] || (fmtCache[k] = new Intl.DateTimeFormat("nb-NO", { timeZone: tz, ...opts })); }
+function parts(ms, tz){
+  const p = {}; for (const x of fmt(tz,{year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",second:"numeric",hourCycle:"h23"}).formatToParts(new Date(ms))) p[x.type] = +x.value || x.value;
+  return { y:+p.year, m:+p.month, d:+p.day, h:+p.hour % 24, mi:+p.minute, s:+p.second };
+}
+function tzOffset(ms, tz){ const p = parts(ms, tz); return (Date.UTC(p.y,p.m-1,p.d,p.h,p.mi,p.s) - Math.floor(ms/1000)*1000) / 60000; }
+function localMidnight(y, m, d, tz){ const g = Date.UTC(y, m-1, d); let t = g - tzOffset(g, tz)*60000; t = g - tzOffset(t, tz)*60000; return t; }
+const hm = (ms, tz) => fmt(tz,{hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(ms + 30000)); // avrundet til nærmeste minutt
+const dec = (x, n=1) => x.toFixed(n).replace(".", ",").replace("-", "−");
+function dur(ms){ const m = Math.round(ms/60000); return `${Math.floor(m/60)} t ${String(m%60).padStart(2,"0")} min`; }
+const DIRS = ["N","NNØ","NØ","ØNØ","Ø","ØSØ","SØ","SSØ","S","SSV","SV","VSV","V","VNV","NV","NNV"];
+const compass = az => DIRS[Math.round(az/22.5) % 16];
+const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
+
+// ---- Tilstand ----
+let loc = null;          // {name, region, lat, lon, tz}
+let sel = null;          // valgt dato {y,m,d} eller null = i dag
+let day = null;          // beregnede døgndata
+let calView = null;      // {y,m}
+
+function loadLoc(){
+  try { const s = JSON.parse(localStorage.getItem("solmane.loc")); if (s && isFinite(s.lat)) return s; } catch(e){}
+  const c = CITIES[0]; return { name:c[0], region:c[1], lat:c[2], lon:c[3], tz:c[4] };
+}
+function saveLoc(){ try { localStorage.setItem("solmane.loc", JSON.stringify(loc)); } catch(e){} }
+
+function todayYMD(){ const p = parts(Date.now(), loc.tz); return { y:p.y, m:p.m, d:p.d }; }
+function curYMD(){ return sel || todayYMD(); }
+// Vist tidspunkt: i dag = nå; ellers valgt dato + samme klokkeslett som nå
+function shownMs(){
+  if (!sel) return Date.now();
+  const t = todayYMD();
+  const off = Date.now() - localMidnight(t.y, t.m, t.d, loc.tz);
+  const t0 = localMidnight(sel.y, sel.m, sel.d, loc.tz);
+  const n = sel; const t1 = localMidnight(...nextDay(n.y, n.m, n.d), loc.tz);
+  return Math.min(t0 + off, t1 - 1000);
+}
+function nextDay(y,m,d){ const x = new Date(Date.UTC(y,m-1,d+1)); return [x.getUTCFullYear(), x.getUTCMonth()+1, x.getUTCDate()]; }
+function prevDay(y,m,d){ const x = new Date(Date.UTC(y,m-1,d-1)); return [x.getUTCFullYear(), x.getUTCMonth()+1, x.getUTCDate()]; }
+
+// ---- Døgnberegning ----
+function computeDay(){
+  const { y, m, d } = curYMD();
+  const t0 = localMidnight(y, m, d, loc.tz), t1 = localMidnight(...nextDay(y,m,d), loc.tz);
+  const p0 = localMidnight(...prevDay(y,m,d), loc.tz);
+  const sun = dayEvents(t0, t1, loc.lat, loc.lon, false);
+  const moon = dayEvents(t0, t1, loc.lat, loc.lon, true);
+  const prevSun = dayEvents(p0, t0, loc.lat, loc.lon, false);
+  // kurver hvert 10. minutt
+  const curve = [];
+  for (let t = t0; t <= t1; t += 600000) curve.push({ t, s: refract(sunH(t, loc.lat, loc.lon).alt), m: refract(moonH(t, loc.lat, loc.lon).alt) });
+  day = { key:`${y}-${m}-${d}|${loc.lat},${loc.lon}`, y, m, d, t0, t1, sun, moon, prevSun, curve,
+          full: nextPhase(t0, 180), neu: nextPhase(t0, 0), solst: nextSeason(t0, [1, 3]), equi: nextSeason(t0, [0, 2]) };
+  renderDay();
+}
+
+// Solverv og jevndøgn (Meeus kap. 27). k: 0=mars, 1=juni, 2=sept, 3=des. Returnerer UTC-ms.
+const SEAS_T = [[485,324.96,1934.136],[203,337.23,32964.467],[199,342.08,20.186],[182,27.85,445267.112],[156,73.14,45036.886],
+ [136,171.52,22518.443],[77,222.54,65928.934],[74,296.72,3034.906],[70,243.58,9037.513],[58,119.81,33718.147],[52,297.17,150.678],
+ [50,21.02,2281.226],[45,247.54,29929.562],[44,325.15,31555.956],[29,60.93,4443.417],[18,155.12,67555.328],[17,288.79,4562.452],
+ [16,198.04,62894.029],[14,199.76,31436.921],[12,95.39,14577.848],[12,287.11,31931.756],[12,320.81,34777.259],[9,227.73,1222.114],[8,15.45,16859.074]];
+const SEAS_P = [[2451623.80984,365242.37404,0.05169,-0.00411,-0.00057],[2451716.56767,365241.62603,0.00325,0.00888,-0.00030],
+ [2451810.21715,365242.01767,-0.11575,0.00337,0.00078],[2451900.05952,365242.74049,-0.06223,-0.00823,0.00032]];
+function season(year, k){
+  const Y = (year - 2000) / 1000, p = SEAS_P[k];
+  const J0 = p[0] + Y * (p[1] + Y * (p[2] + Y * (p[3] + Y * p[4])));
+  const T = (J0 - 2451545) / 36525, W = 35999.373 * T - 2.47;
+  const dl = 1 + 0.0334 * Math.cos(W * Math.PI / 180) + 0.0007 * Math.cos(2 * W * Math.PI / 180);
+  let S = 0; for (const [a, b, c] of SEAS_T) S += a * Math.cos((b + c * T) * Math.PI / 180);
+  return (J0 + 0.00001 * S / dl - 2440587.5) * 86400000 - DELTA_T * 1000;
+}
+// Første hendelse av typene ks fra og med ms. Returnerer {t, k}
+function nextSeason(ms, ks){
+  const y = new Date(ms).getUTCFullYear(); let best = null;
+  for (const yy of [y, y + 1]) for (const k of ks) { const t = season(yy, k); if (t >= ms && (!best || t < best.t)) best = { t, k }; }
+  return best;
+}
+
+const row = (l, v, n = "", id = "") => `<dt>${l}</dt><dd${id ? ` id="${id}"` : ""}>${v}</dd><dd class="n"${id ? ` id="${id}N"` : ""}>${n}</dd>`;
+const SEP = `<div class="sep"></div>`;
+
+function renderDay(){
+  const tz = loc.tz, s = day.sun, north = loc.lat >= 0;
+  const df = t => { if (!t) return "–"; const p = parts(t + 30000, tz), z = n => String(n).padStart(2, "0"); return `${z(p.d)}.${z(p.m)}. ${hm(t, tz)}`; };
+  const inDays = t => { const n = Math.floor((t - day.t0) / 86400000); return n <= 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} d`; };
+
+  // Sol
+  $("daylen").textContent = dur(s.above);
+  const diff = Math.round((s.above - day.prevSun.above) / 60000);
+  $("daydiff").textContent = s.above >= 86400000 - 60000 && day.prevSun.above >= 86400000 - 60000 ? "Midnattssol"
+    : s.above < 60000 && day.prevSun.above < 60000 ? "Mørketid – solen står ikke opp"
+    : diff === 0 ? "Samme som dagen før" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)} min fra dagen før`;
+  const none = s.alwaysUp ? "midnattssol" : "mørketid";
+  const also = arr => arr.length > 1 ? `også ${hm(arr[1].t ?? arr[1], tz)}` : "";
+  const tr = s.transits[0];
+  const sol = day.solst, eq = day.equi;
+  const solL = sol ? `Neste ${(sol.k === 1) === north ? "sommer" : "vinter"}solverv` : "Neste solverv";
+  const eqL = eq ? `Neste ${(eq.k === 0) === north ? "vår" : "høst"}jevndøgn` : "Neste jevndøgn";
+  $("sRows").innerHTML =
+      row("Soloppgang", s.rises.length ? hm(s.rises[0], tz) : "–", s.rises.length ? also(s.rises) : none)
+    + row("Sol i meridian", tr ? hm(tr.t, tz) : "–")
+    + row("Solnedgang", s.sets.length ? hm(s.sets[0], tz) : "–", s.sets.length ? also(s.sets) : none)
+    + SEP + row("Høyde nå", "–", "", "sAlt") + row("Retning nå", "–", "", "sAz")
+    + row("Maks høyde (meridian)", tr ? dec(tr.alt) + "°" : "–", tr && tr.alt < 0 ? "under horisont" : "")
+    + SEP + row(solL, sol ? df(sol.t) : "–", sol ? inDays(sol.t) : "") + row(eqL, eq ? df(eq.t) : "–", eq ? inDays(eq.t) : "");
+
+  // Måne (fast rekkefølge, så radene står på linje med solpanelet)
+  const mo = day.moon, mt = mo.transits[0];
+  const noEv = !mo.rises.length && !mo.sets.length;
+  const noneM = mo.alwaysUp ? "oppe hele døgnet" : "nede hele døgnet";
+  const evN = arr => arr.length ? also(arr) : noEv ? noneM : "ingen i døgnet";
+  $("mRows").innerHTML =
+      row("Måneoppgang", mo.rises.length ? hm(mo.rises[0], tz) : "–", evN(mo.rises))
+    + row("Måne i meridian", mt ? hm(mt.t, tz) : "–", mt ? also(mo.transits) : "ingen i døgnet")
+    + row("Månenedgang", mo.sets.length ? hm(mo.sets[0], tz) : "–", evN(mo.sets))
+    + SEP + row("Høyde nå", "–", "", "mAlt") + row("Retning nå", "–", "", "mAz")
+    + row("Maks høyde (meridian)", mt ? dec(mt.alt) + "°" : "–", mt && mt.alt < 0 ? "under horisont" : "")
+    + SEP + row("Neste fullmåne", df(day.full), day.full ? inDays(day.full) : "") + row("Neste nymåne", df(day.neu), day.neu ? inDays(day.neu) : "");
+
+  drawDial();
+  renderYear();
+  renderChartBase();
+  tick(true);
+}
+
+// Døgnskive: 24 t, midnatt nederst, middag øverst. Bue = sol over horisonten.
+const DR = 26;
+const dialPt = h => { const a = h / 24 * 2 * Math.PI; return [(-DR * Math.sin(a)).toFixed(2), (DR * Math.cos(a)).toFixed(2)]; };
+function drawDial(){
+  const s = day.sun, span = (day.t1 - day.t0) / 3600000, hr = t => (t - day.t0) / 3600000 * 24 / span;
+  const ev = [...s.rises.map(t => [hr(t), 1]), ...s.sets.map(t => [hr(t), 0])].sort((a, b) => a[0] - b[0]);
+  let up = ev.length ? ev[0][1] === 0 : s.alwaysUp, start = 0;
+  const segs = [];
+  for (const [h, isRise] of ev) { if (isRise) { start = h; up = true; } else { if (up) segs.push([start, h]); up = false; } }
+  if (up) segs.push([start, 24]);
+  let g = `<circle r="${DR}" fill="none" stroke="var(--night)" stroke-width="7"/>`;
+  for (const [a, b] of segs) {
+    if (b - a > 23.98) { g += `<circle r="${DR}" fill="none" stroke="var(--sun)" stroke-width="7"/>`; continue; }
+    const [x1, y1] = dialPt(a), [x2, y2] = dialPt(b);
+    g += `<path d="M${x1},${y1} A${DR},${DR} 0 ${b - a > 12 ? 1 : 0} 1 ${x2},${y2}" fill="none" stroke="var(--sun)" stroke-width="7" stroke-linecap="round"/>`;
+  }
+  for (const h of [0, 6, 12, 18]) { const a = h / 24 * 2 * Math.PI, r1 = 15, r2 = 19;
+    g += `<line x1="${(-r1*Math.sin(a)).toFixed(2)}" y1="${(r1*Math.cos(a)).toFixed(2)}" x2="${(-r2*Math.sin(a)).toFixed(2)}" y2="${(r2*Math.cos(a)).toFixed(2)}" stroke="var(--muted)" stroke-width="1.5"/>`; }
+  g += `<circle id="dialNow" r="3.6" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`;
+  $("dialSvg").innerHTML = g;
+}
+function dialNow(t){
+  const c = $("dialNow"); if (!c) return;
+  const h = (t - day.t0) / (day.t1 - day.t0) * 24, [x, y] = dialPt(h);
+  c.setAttribute("cx", x); c.setAttribute("cy", y);
+}
+
+// Årsslider med daglengdekurve
+let ybKey = "";
+const MSHORT = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+function renderYear(){
+  const y = day.y, N = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
+  const doy = (Date.UTC(y, day.m - 1, day.d) - Date.UTC(y, 0, 1)) / 86400000 + 1;
+  const td = todayYMD(), tdoy = td.y === y ? (Date.UTC(y, td.m - 1, td.d) - Date.UTC(y, 0, 1)) / 86400000 + 1 : 0;
+  const X = d => ((d - 1) / (N - 1) * 1000).toFixed(1);
+  const key = `${y}|${loc.lat}|${loc.lon}|${tdoy}`;
+  if (key !== ybKey) {
+    ybKey = key;
+    const sl = Math.sin(loc.lat * Math.PI / 180), cl = Math.cos(loc.lat * Math.PI / 180), h0 = Math.sin(-0.8333 * Math.PI / 180);
+    let pts = [];
+    for (let d = 1; d <= N; d++) {
+      const dc = sunPos(Date.UTC(y, 0, d, 12) - loc.lon / 15 * 3600000).dec * Math.PI / 180;
+      const c = (h0 - sl * Math.sin(dc)) / (cl * Math.cos(dc));
+      const len = c <= -1 ? 24 : c >= 1 ? 0 : 2 * Math.acos(c) * 180 / Math.PI / 15;
+      pts.push(`${X(d)},${(100 - len / 24 * 100).toFixed(2)}`);
+    }
+    const ns = 'vector-effect="non-scaling-stroke"';
+    let g = `<rect width="1000" height="100" fill="var(--night)"/>`;
+    g += `<path d="M0,100L${pts.join("L")}L1000,100Z" fill="var(--sun-soft)"/>`;
+    for (let m = 1; m < 12; m++) { const x = X((Date.UTC(y, m, 1) - Date.UTC(y, 0, 1)) / 86400000 + 1); g += `<line x1="${x}" x2="${x}" y1="0" y2="100" stroke="var(--line)" stroke-width="1" ${ns}/>`; }
+    g += `<line x1="0" x2="1000" y1="50" y2="50" stroke="var(--muted)" stroke-opacity=".5" stroke-dasharray="3 4" stroke-width="1" ${ns}/>`;
+    g += `<path d="M${pts.join("L")}" fill="none" stroke="var(--sun)" stroke-width="2" ${ns}/>`;
+    if (tdoy) g += `<line x1="${X(tdoy)}" x2="${X(tdoy)}" y1="0" y2="100" stroke="var(--ink)" stroke-opacity=".75" stroke-width="1.5" ${ns}/>`;
+    $("ybSvg").innerHTML = g;
+    $("ybMonths").innerHTML = MSHORT.map((n, m) => `<span style="left:${X((Date.UTC(y, m, 1) - Date.UTC(y, 0, 1)) / 86400000 + 1) / 10}%">${n}</span>`).join("");
+    $("yslider").max = N;
+  }
+  $("yslider").value = doy;
+  $("yslider").setAttribute("aria-valuetext", `${day.d}. ${MONTHS[day.m - 1]} ${y}`);
+  $("ybYear").textContent = y; $("ybDoy").textContent = `${doy}/${N}`;
+}
+
+// ---- Månefase ----
+function phaseName(e){
+  if (e < 6 || e >= 354) return "Nymåne";
+  if (e < 84) return "Voksende månesigd";
+  if (e < 96) return "Første kvarter";
+  if (e < 174) return "Voksende måne";
+  if (e < 186) return "Fullmåne";
+  if (e < 264) return "Avtakende måne";
+  if (e < 276) return "Siste kvarter";
+  return "Avtakende månesigd";
+}
+function drawPhase(ph){
+  const r = 30, k = Math.cos(ph.elong * Math.PI / 180); // +1 ny, -1 full
+  const rx = Math.abs(r * k).toFixed(2);
+  const crescent = ph.illum < 0.5;
+  // opplyst del til høyre (voksende, nordlige halvkule); speiles for avtakende / sørlige halvkule
+  let flip = !ph.waxing; if (loc.lat < 0) flip = !flip;
+  const d = `M0,${-r} A${r},${r} 0 0 1 0,${r} A${rx},${r} 0 0 ${crescent ? 0 : 1} 0,${-r} Z`;
+  $("phaseSvg").innerHTML =
+    `<circle r="${r}" fill="var(--moon-soft)" stroke="var(--line)" stroke-width="1"/>` +
+    `<path d="${d}" fill="var(--moon)" transform="scale(${flip ? -1 : 1},1)"/>`;
+}
+
+// ---- Døgnkurve ----
+const W = 720, H = 230, PL = 34, PR = 10, PT = 12, PB = 26;
+let yMin, yMax;
+const X = t => PL + (t - day.t0) / (day.t1 - day.t0) * (W - PL - PR);
+const Y = a => PT + (yMax - Math.max(yMin, Math.min(yMax, a))) / (yMax - yMin) * (H - PT - PB);
+function renderChartBase(){
+  const c = day.curve;
+  const hi = Math.max(30, ...c.map(p => Math.max(p.s, p.m)));
+  const lo = Math.min(...c.map(p => Math.min(p.s, p.m)));
+  yMax = Math.ceil(hi / 15) * 15; yMin = Math.max(-90, Math.floor(Math.max(lo, -yMax * 0.6) / 15) * 15);
+  let g = "";
+  // natt-skygge der sola er under horisonten
+  for (let i = 0; i < c.length - 1; i++) if (c[i].s < -0.833 && c[i+1].s < -0.833)
+    g += `<rect x="${X(c[i].t).toFixed(1)}" y="${PT}" width="${(X(c[i+1].t) - X(c[i].t) + 0.4).toFixed(1)}" height="${H-PT-PB}" fill="var(--night)"/>`;
+  // rutenett
+  for (let a = yMin; a <= yMax; a += 15) {
+    g += `<line x1="${PL}" x2="${W-PR}" y1="${Y(a)}" y2="${Y(a)}" stroke="var(--line)" stroke-width="${a===0?0:1}" ${a!==0?'stroke-dasharray="2 4"':''}/>`;
+    g += `<text x="${PL-6}" y="${Y(a)+4}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">${a===0?"0°":String(a).replace("-","−")}</text>`;
+  }
+  for (let h = 0; h <= 24; h += 3) {
+    const t = day.t0 + h * 3600000; if (t > day.t1) break;
+    g += `<line x1="${X(t)}" x2="${X(t)}" y1="${PT}" y2="${H-PB}" stroke="var(--line)" stroke-dasharray="2 4"/>`;
+    g += `<text x="${X(t)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">${h===24?"24":hm(t, loc.tz).slice(0,2)}</text>`;
+  }
+  g += `<line x1="${PL}" x2="${W-PR}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.2"/>`;
+  g += `<text x="${W-PR-2}" y="${Y(0)-5}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Figtree,sans-serif">horisont</text>`;
+  const line = k => c.map((p,i) => `${i?"L":"M"}${X(p.t).toFixed(1)},${Y(p[k]).toFixed(1)}`).join("");
+  // område over horisont for sol
+  g += `<path d="${line("s")}L${X(c[c.length-1].t)},${Y(0)}L${X(c[0].t)},${Y(0)}Z" fill="var(--sun-soft)" opacity=".7" clip-path="url(#above)"/>`;
+  g += `<defs><clipPath id="above"><rect x="0" y="0" width="${W}" height="${Y(0)}"/></clipPath></defs>`;
+  g += `<path d="${line("m")}" fill="none" stroke="var(--moon)" stroke-width="2.2" stroke-dasharray="6 4" stroke-linejoin="round"/>`;
+  g += `<path d="${line("s")}" fill="none" stroke="var(--sun)" stroke-width="2.6" stroke-linejoin="round"/>`;
+  g += `<g id="nowg"></g>`;
+  $("chart").innerHTML = g;
+}
+function renderNow(t, sa, ma){
+  const g = $("nowg"); if (!g) return;
+  if (t < day.t0 || t > day.t1) { g.innerHTML = ""; return; }
+  const x = X(t).toFixed(1);
+  g.innerHTML = `<line x1="${x}" x2="${x}" y1="${PT}" y2="${H-PB}" stroke="var(--ink)" stroke-opacity=".5" stroke-width="1"/>` +
+    `<circle cx="${x}" cy="${Y(ma).toFixed(1)}" r="5" fill="var(--surface)" stroke="var(--moon)" stroke-width="2.4"/>` +
+    `<circle cx="${x}" cy="${Y(sa).toFixed(1)}" r="5.5" fill="var(--sun)" stroke="var(--surface)" stroke-width="2"/>`;
+}
+
+// ---- Løpende oppdatering ----
+let lastMin = -1;
+function tick(force){
+  if (!loc) return;
+  const tz = loc.tz;
+  if (!sel) { const t = todayYMD(); if (!day || day.y !== t.y || day.m !== t.m || day.d !== t.d) { computeDay(); return; } }
+  const t = shownMs();
+  $("clock").textContent = fmt(tz,{hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).format(new Date(t));
+  const dstr = fmt(tz,{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(t));
+  $("datestr").textContent = dstr.charAt(0).toUpperCase() + dstr.slice(1);
+  const min = Math.floor(t / 60000);
+  if (force || min !== lastMin) {
+    lastMin = min;
+    const s = sunH(t, loc.lat, loc.lon), m = moonH(t, loc.lat, loc.lon);
+    const sa = refract(s.alt), ma = refract(m.alt);
+    const setV = (id, v, n) => { const a = $(id), b = $(id + "N"); if (a) a.textContent = v; if (b) b.textContent = n; };
+    setV("sAlt", `${dec(sa)}°`, sa > -0.833 ? "over horisont" : "under horisont");
+    setV("sAz", `${dec(s.az)}°`, compass(s.az));
+    setV("mAlt", `${dec(ma)}°`, ma > -0.6 ? "over horisont" : "under horisont");
+    setV("mAz", `${dec(m.az)}°`, compass(m.az));
+    const ph = moonPhase(t);
+    $("phName").textContent = phaseName(ph.elong);
+    $("phSub").textContent = `${Math.round(ph.illum * 100)} % opplyst · ${dec(ph.age)} døgn gammel`;
+    drawPhase(ph);
+    renderNow(t, sa, ma);
+    dialNow(t);
+    const off = tzOffset(t, tz) / 60;
+    $("tzline").textContent = `Lokal tid for ${loc.name} · UTC${off >= 0 ? "+" : "−"}${String(Math.abs(off)).replace(".", ",")} · trykk for å velge dato`;
+  }
+}
+
+// ---- Sted ----
+function setLoc(c){
+  loc = c; saveLoc();
+  $("city").value = c.name; $("err").hidden = true; $("sugg").hidden = true;
+  const ns = c.lat >= 0 ? "N" : "S", ew = c.lon >= 0 ? "Ø" : "V";
+  $("coord").innerHTML = `<span><b>${c.name}</b>${c.region ? ", " + c.region : ""}</span><span class="num">${dec(Math.abs(c.lat),3)}° ${ns}, ${dec(Math.abs(c.lon),3)}° ${ew}</span>`;
+  lastMin = -1; computeDay();
+}
+function matches(q){
+  const n = norm(q); if (!n) return [];
+  const a = [], b = [];
+  for (const c of CITIES) { const cn = norm(c[0]); if (cn.startsWith(n)) a.push(c); else if (cn.includes(n) || norm(c[1]).startsWith(n)) b.push(c); }
+  return a.concat(b).slice(0, 7);
+}
+const toLoc = c => ({ name:c[0], region:c[1], lat:c[2], lon:c[3], tz:c[4] });
+function parseCoord(q){
+  const m = q.trim().match(/^(-?\d{1,2}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1].replace(",", ".")), lon = parseFloat(m[2].replace(",", "."));
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  let best = CITIES[0], bd = Infinity;
+  for (const c of CITIES) { const d = (c[2]-lat)**2 + ((c[3]-lon)*Math.cos(lat*Math.PI/180))**2; if (d < bd) { bd = d; best = c; } }
+  return { name: "Egendefinert punkt", region: `tidssone som ${best[0]}`, lat, lon, tz: best[4] };
+}
+let active = 0, current = [];
+function showSugg(){
+  const q = $("city").value; current = matches(q); active = 0;
+  const ul = $("sugg");
+  if (!current.length || norm(q) === norm(loc.name)) { ul.hidden = true; return; }
+  ul.innerHTML = current.map((c,i) => `<li><button type="button" data-i="${i}" class="${i===0?"act":""}"><span>${c[0]}</span><small>${c[1]}</small></button></li>`).join("");
+  ul.hidden = false;
+}
+function submitCity(){
+  const q = $("city").value.trim();
+  const coord = parseCoord(q);
+  if (coord) return setLoc(coord);
+  const m = current.length ? current : matches(q);
+  if (m.length) return setLoc(toLoc(m[Math.min(active, m.length-1)]));
+  $("sugg").hidden = true;
+  $("err").textContent = `Fant ikke «${q}». Prøv en større by i nærheten, eller skriv koordinater som 62.47, 6.15.`;
+  $("err").hidden = false;
+}
+$("city").addEventListener("input", () => { $("err").hidden = true; showSugg(); });
+$("city").addEventListener("focus", e => e.target.select());
+$("city").addEventListener("keydown", e => {
+  const ul = $("sugg");
+  if (e.key === "Enter") { e.preventDefault(); submitCity(); e.target.blur(); }
+  else if (e.key === "Escape") { ul.hidden = true; e.target.value = loc.name; e.target.blur(); }
+  else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && !ul.hidden) {
+    e.preventDefault(); active = (active + (e.key === "ArrowDown" ? 1 : -1) + current.length) % current.length;
+    ul.querySelectorAll("button").forEach((b,i) => b.classList.toggle("act", i === active));
+  }
+});
+$("sugg").addEventListener("mousedown", e => e.preventDefault());
+$("sugg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setLoc(toLoc(current[+b.dataset.i])); });
+$("city").addEventListener("blur", () => setTimeout(() => { $("sugg").hidden = true; if (!$("city").value.trim()) $("city").value = loc.name; }, 120));
+
+// ---- Kalender ----
+function isoWeek(y, m, d){
+  const t = new Date(Date.UTC(y, m-1, d)); const wd = (t.getUTCDay() + 6) % 7;
+  t.setUTCDate(t.getUTCDate() - wd + 3);
+  const fy = t.getUTCFullYear(), f = new Date(Date.UTC(fy, 0, 4));
+  return 1 + Math.round(((t - f) / 86400000 - 3 + ((f.getUTCDay() + 6) % 7)) / 7);
+}
+function renderCal(){
+  const { y, m } = calView, cur = curYMD(), td = todayYMD();
+  $("calttl").textContent = `${MONTHS[m-1]} ${y}`;
+  let h = `<div class="h">uke</div>` + ["ma","ti","on","to","fr","lø","sø"].map(x => `<div class="h">${x}</div>`).join("");
+  const first = new Date(Date.UTC(y, m-1, 1)), lead = (first.getUTCDay() + 6) % 7;
+  let dt = new Date(Date.UTC(y, m-1, 1 - lead));
+  for (let w = 0; w < 6; w++) {
+    h += `<div class="wk">${isoWeek(dt.getUTCFullYear(), dt.getUTCMonth()+1, dt.getUTCDate())}</div>`;
+    for (let i = 0; i < 7; i++) {
+      const Y = dt.getUTCFullYear(), M = dt.getUTCMonth()+1, D = dt.getUTCDate();
+      const cls = [M !== m ? "out" : "", (Y===td.y&&M===td.m&&D===td.d) ? "today" : "", (Y===cur.y&&M===cur.m&&D===cur.d) ? "sel" : ""].join(" ");
+      h += `<button type="button" class="${cls}" data-d="${Y}-${M}-${D}" aria-label="${D}. ${MONTHS[M-1]} ${Y}">${D}</button>`;
+      dt.setUTCDate(D + 1);
+    }
+    if (dt.getUTCMonth()+1 !== m && w >= 4) break;
+  }
+  $("grid").innerHTML = h;
+}
+function openCal(){ const c = curYMD(); calView = { y:c.y, m:c.m }; renderCal(); $("cal").hidden = false; $("timebtn").setAttribute("aria-expanded","true"); }
+function closeCal(){ $("cal").hidden = true; $("timebtn").setAttribute("aria-expanded","false"); }
+function stepMonth(n){ let m = calView.m + n, y = calView.y; while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; } calView = { y, m }; renderCal(); }
+function pickDate(y, m, d){
+  const t = todayYMD();
+  sel = (y===t.y && m===t.m && d===t.d) ? null : { y, m, d };
+  $("whenrow").hidden = !sel; closeCal(); lastMin = -1; computeDay();
+}
+function resetToday(){ pickDate(...Object.values(todayYMD())); }
+function stepDay(n){ const c = curYMD(); pickDate(...(n > 0 ? nextDay(c.y, c.m, c.d) : prevDay(c.y, c.m, c.d))); }
+$("prevday").onclick = () => stepDay(-1); $("nextday").onclick = () => stepDay(1);
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input")) return;
+  if (!$("cal").hidden) return;
+  if (e.key === "ArrowLeft") stepDay(-1); else if (e.key === "ArrowRight") stepDay(1);
+});
+$("timebtn").addEventListener("click", () => $("cal").hidden ? openCal() : closeCal());
+$("pm").onclick = () => stepMonth(-1); $("nm").onclick = () => stepMonth(1);
+$("py").onclick = () => stepMonth(-12); $("ny").onclick = () => stepMonth(12);
+$("grid").addEventListener("click", e => { const b = e.target.closest("button"); if (b) pickDate(...b.dataset.d.split("-").map(Number)); });
+$("calclose").onclick = closeCal; $("caltoday").onclick = resetToday; $("reset").onclick = resetToday;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("cal").hidden) closeCal(); });
+document.addEventListener("click", e => { if (!$("cal").hidden && !e.target.closest(".when")) closeCal(); });
+
+
+// Årsslider
+let ysRaf = 0;
+$("yslider").addEventListener("input", e => {
+  const v = +e.target.value;
+  if (ysRaf) cancelAnimationFrame(ysRaf);
+  ysRaf = requestAnimationFrame(() => { ysRaf = 0; const x = new Date(Date.UTC(day.y, 0, v)); pickDate(x.getUTCFullYear(), x.getUTCMonth() + 1, x.getUTCDate()); });
+});
+
+// Info-vindu
+function openInfo(){ $("info").hidden = false; $("infoclose").focus(); }
+function closeInfo(){ $("info").hidden = true; $("infobtn").focus(); }
+$("infobtn").onclick = openInfo; $("infoclose").onclick = closeInfo;
+$("info").addEventListener("click", e => { if (e.target.id === "info") closeInfo(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("info").hidden) closeInfo(); });
+
+// ---- Start ----
+setLoc(loadLoc());
+setInterval(() => tick(false), 1000);
+</script>
+
+</body></html>
