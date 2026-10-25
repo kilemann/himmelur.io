@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="nb"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%23F0A23C%27/%3E%3Cpath d=%27M16 2a14 14 0 0 0 0 28a10 14 0 0 1 0-28z%27 fill=%27%234F5F92%27/%3E%3C/svg%3E"></head><body>
 <title>Himmelur</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,6 +44,14 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .coord{grid-column:1/-1;color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
 .coord b{color:var(--ink);font-weight:600}
 @media (max-width:640px){.top{grid-template-columns:1fr}.where input{width:100%}}
+.where{width:min(340px,100%)} .where input{width:100%;padding-right:46px}
+@media (max-width:640px){.where{width:auto}}
+.gpsbtn{all:unset;box-sizing:border-box;position:absolute;right:5px;top:5px;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--moon);cursor:pointer}
+.gpsbtn:hover{background:var(--moon-soft)} .gpsbtn:focus-visible{outline:2px solid var(--moon)}
+.gpsbtn svg{position:static;width:20px;height:20px;color:inherit}
+.gpsbtn.busy svg{animation:gpsspin 1.1s linear infinite}
+@keyframes gpsspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.gpsbtn.busy svg{animation:none;opacity:.5}}
 
 /* Tid */
 .when{position:relative}
@@ -173,10 +181,11 @@ footer p{margin:0 0 6px}
 
 <div class="wrap">
   <div class="top">
-    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.3</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
+    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.4</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
     <div class="where">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
       <input id="city" type="text" autocomplete="off" spellcheck="false" placeholder="Skriv nærmeste by …" aria-label="Nærmeste by eller koordinater">
+      <button class="gpsbtn" id="gps" type="button" aria-label="Bruk min posisjon" title="Bruk min posisjon (GPS)" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg></button>
       <ul class="sugg" id="sugg" hidden></ul>
       <p class="err" id="err" hidden></p>
     </div>
@@ -269,8 +278,12 @@ footer p{margin:0 0 6px}
       <p>Slideren viser daglengden gjennom hele året. Den tynne loddrette streken markerer dagens dato.</p>
       <h3>Byer</h3>
       <p>Byer søkes i en innebygd liste med norske og store utenlandske byer. Appen henter ikke data fra nettet.</p>
+      <h3>Min posisjon (GPS)</h3>
+      <p>Trykk på siktet i byfeltet for å bruke enhetens posisjon. Beregningene bruker da nøyaktig breddegrad og lengdegrad der du er, og nærmeste by vises bare som navn. Har du gitt tilgang, oppdateres posisjonen automatisk neste gang du åpner appen, helt til du velger en by selv. Posisjonen lagres bare i din egen nettleser.</p>
+      <p>Knappen vises bare der nettleseren tillater posisjon, for eksempel på GitHub Pages. Inne i Claude er den skjult.</p>
       <h3>Versjoner</h3>
       <div class="vlog">
+        <b>v1.4</b><span>GPS-knapp for egen posisjon, med automatisk oppdatering når tilgang er gitt.</span>
         <b>v1.3</b><span>Nytt navn: Himmelur (tidligere Sol &amp; Måne).</span>
         <b>v1.2</b><span>Årsslider med daglengdekurve, større kalender, symmetriske verdikolonner, døgnskive for sola, neste solverv og jevndøgn, info-vindu.</span>
         <b>v1.1</b><span>Pilknapper for forrige og neste dag.</span>
@@ -809,7 +822,7 @@ function setLoc(c){
   loc = c; saveLoc();
   $("city").value = c.name; $("err").hidden = true; $("sugg").hidden = true;
   const ns = c.lat >= 0 ? "N" : "S", ew = c.lon >= 0 ? "Ø" : "V";
-  $("coord").innerHTML = `<span><b>${c.name}</b>${c.region ? ", " + c.region : ""}</span><span class="num">${dec(Math.abs(c.lat),3)}° ${ns}, ${dec(Math.abs(c.lon),3)}° ${ew}</span>`;
+  $("coord").innerHTML = `<span><b>${c.name}</b>${c.region ? ", " + c.region : ""}</span><span class="num">${dec(Math.abs(c.lat),3)}° ${ns}, ${dec(Math.abs(c.lon),3)}° ${ew}</span>${c.gps ? `<span>GPS ±${c.acc < 1000 ? Math.round(c.acc) + " m" : dec(c.acc / 1000) + " km"}</span>` : ""}`;
   lastMin = -1; computeDay();
 }
 function matches(q){
@@ -860,6 +873,46 @@ $("city").addEventListener("keydown", e => {
 $("sugg").addEventListener("mousedown", e => e.preventDefault());
 $("sugg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setLoc(toLoc(current[+b.dataset.i])); });
 $("city").addEventListener("blur", () => setTimeout(() => { $("sugg").hidden = true; if (!$("city").value.trim()) $("city").value = loc.name; }, 120));
+
+// ---- GPS-posisjon ----
+function distKm(a, b, c, d){
+  const R = 6371, r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function nearestCity(lat, lon){
+  let best = CITIES[0], bd = Infinity;
+  for (const c of CITIES) { const d = distKm(lat, lon, c[2], c[3]); if (d < bd) { bd = d; best = c; } }
+  return { c: best, km: bd };
+}
+function deviceTz(){ try { const z = Intl.DateTimeFormat().resolvedOptions().timeZone; fmt(z, {}); return z; } catch (e) { return null; } }
+function locate(silent){
+  if (!navigator.geolocation) return;
+  const btn = $("gps"); btn.classList.add("busy"); btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(p => {
+    btn.classList.remove("busy"); btn.disabled = false;
+    const lat = p.coords.latitude, lon = p.coords.longitude, n = nearestCity(lat, lon);
+    const near = n.km < 1.5 ? `i ${n.c[0]}` : `${Math.round(n.km)} km fra ${n.c[0]}`;
+    setLoc({ name: "Min posisjon", region: near, lat, lon, tz: deviceTz() || n.c[4], gps: true, acc: p.coords.accuracy });
+  }, err => {
+    btn.classList.remove("busy"); btn.disabled = false;
+    if (silent) return;
+    const msg = err.code === 1 ? "Posisjon er ikke tillatt. Gi tilgang i nettleserens innstillinger for denne siden, eller skriv by eller koordinater."
+      : err.code === 3 ? "Fant ikke posisjonen i tide. Prøv igjen, gjerne utendørs eller med Wi-Fi på."
+      : "Posisjonen er ikke tilgjengelig akkurat nå. Skriv by eller koordinater i stedet.";
+    $("err").textContent = msg; $("err").hidden = false;
+  }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+}
+$("gps").addEventListener("click", () => { $("err").hidden = true; locate(false); });
+async function initGps(){
+  if (!navigator.geolocation || !window.isSecureContext) return;
+  let state = "prompt";
+  try { state = (await navigator.permissions.query({ name: "geolocation" })).state; } catch (e) {}
+  // Skjul knappen der posisjon er blokkert av rammen (f.eks. inne i Claude)
+  if (state === "denied" && window.self !== window.top) return;
+  $("gps").hidden = false;
+  // Automatisk oppdatering når brukeren sist brukte GPS og tilgang allerede er gitt
+  if (loc && loc.gps && state === "granted") locate(true);
+}
 
 // ---- Kalender ----
 function isoWeek(y, m, d){
@@ -928,6 +981,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("info")
 
 // ---- Start ----
 setLoc(loadLoc());
+initGps();
 setInterval(() => tick(false), 1000);
 </script>
 
