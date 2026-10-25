@@ -181,7 +181,7 @@ footer p{margin:0 0 6px}
 
 <div class="wrap">
   <div class="top">
-    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.5</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
+    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.6</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
     <div class="where">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
       <input id="city" type="text" autocomplete="off" spellcheck="false" placeholder="Skriv nærmeste by …" aria-label="Nærmeste by eller koordinater">
@@ -284,6 +284,7 @@ footer p{margin:0 0 6px}
       <p>Knappen vises bare der nettleseren tillater posisjon, for eksempel på GitHub Pages. Inne i Claude er den skjult.</p>
       <h3>Versjoner</h3>
       <div class="vlog">
+        <b>v1.6</b><span>Kristiansand er standardby ved første besøk.</span>
         <b>v1.5</b><span>Døgnkurven står over årsslideren, og viser maks høyde for sol og måne og daglengde.</span>
         <b>v1.4</b><span>GPS-knapp for egen posisjon, med automatisk oppdatering når tilgang er gitt.</span>
         <b>v1.3</b><span>Nytt navn: Himmelur (tidligere Sol &amp; Måne).</span>
@@ -554,9 +555,10 @@ let sel = null;          // valgt dato {y,m,d} eller null = i dag
 let day = null;          // beregnede døgndata
 let calView = null;      // {y,m}
 
+const DEFAULT_CITY = "Kristiansand"; // standardby ved første besøk
 function loadLoc(){
   try { const s = JSON.parse(localStorage.getItem("solmane.loc")); if (s && isFinite(s.lat)) return s; } catch(e){}
-  const c = CITIES[0]; return { name:c[0], region:c[1], lat:c[2], lon:c[3], tz:c[4] };
+  const c = CITIES.find(x => x[0] === DEFAULT_CITY) || CITIES[0]; return { name:c[0], region:c[1], lat:c[2], lon:c[3], tz:c[4] };
 }
 function saveLoc(){ try { localStorage.setItem("solmane.loc", JSON.stringify(loc)); } catch(e){} }
 
