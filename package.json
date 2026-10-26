@@ -1,0 +1,9 @@
+{
+  "name": "himmelur",
+  "version": "1.7.0",
+  "private": true,
+  "description": "Himmelur – sol og måne for valgt sted og dato",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}
