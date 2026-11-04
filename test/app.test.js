@@ -191,7 +191,7 @@ test('Polar natt og midnattssol vises med tydelig tekst', () => {
 
 test('Døgnkurven tegnes med både sol og måne, og tegnes uten feil for alle byer', () => {
   const { env, api } = load({ now: NOON });
-  assert.match(env.el('chart').innerHTML, /Daglengde/);
+  assert.match(env.el('chartStats').innerHTML, /Daglengde/, 'daglengde står i raden under diagrammet');
   assert.match(env.el('chart').innerHTML, /horisont/);
   for (const c of ['Longyearbyen', 'Singapore', 'Anchorage', 'Auckland', 'Reykjavík', 'Nuuk']) {
     env.el('city').value = c;

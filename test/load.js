@@ -10,10 +10,10 @@ const NAMES = [
   // tid og format
   'norm', 'parts', 'tzOffset', 'localMidnight', 'hm', 'dec', 'dur', 'compass', 'nextDay', 'prevDay', 'isoWeek', 'MONTHS',
   // sted
-  'CITIES', 'DEFAULT_CITY', 'matches', 'parseCoord', 'toLoc', 'distKm', 'nearestCity', 'loadLoc', 'saveLoc',
+  'CITIES', 'DEFAULT_CITY', 'matches', 'parseCoord', 'toLoc', 'distKm', 'nearestCity', 'loadLoc', 'saveLoc', 'cleanLoc', 'validTz', 'esc',
   // tilstand og skjerm
   'loc', 'sel', 'day', 'calView', 'todayYMD', 'shownMs', 'computeDay', 'setLoc', 'tick', 'stepDay', 'pickDate',
-  'resetToday', 'openCal', 'closeCal', 'renderCal', 'stepMonth', 'submitCity', 'showSugg',
+  'resetToday', 'riseAlt', 'renderChartBase', 'openCal', 'closeCal', 'renderCal', 'stepMonth', 'submitCity', 'showSugg',
 ];
 
 function load(opts = {}) { return loadApp(HTML, NAMES, opts); }

@@ -1,7 +1,15 @@
-<!doctype html><html lang="nb"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%23F0A23C%27/%3E%3Cpath d=%27M16 2a14 14 0 0 0 0 28a10 14 0 0 1 0-28z%27 fill=%27%234F5F92%27/%3E%3C/svg%3E"></head><body>
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Himmelur</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Himmelur viser soloppgang, solnedgang, daglengde, solhøyde, månefase og måneoppgang for valgt sted og dato.">
+<meta name="theme-color" content="#ECEFF4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1320" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%23F0A23C%27/%3E%3Cpath d=%27M16 2a14 14 0 0 0 0 28a10 14 0 0 1 0-28z%27 fill=%27%234F5F92%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: ett kort-stykke for tid/sted, døgnkurve i full bredde, sol- og månepanel side om side (stablet på mobil) */
@@ -11,6 +19,7 @@
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0E1320; --surface:#161D2C; --ink:#E5E8EF; --muted:#8C95A8; --line:#283246;
@@ -18,7 +27,7 @@
 :root[data-theme="dark"]{
   --bg:#0E1320; --surface:#161D2C; --ink:#E5E8EF; --muted:#8C95A8; --line:#283246;
   --sun:#F0A23C; --sun-soft:#3A2C1C; --moon:#A9B7E0; --moon-soft:#262F48; --night:#121827; color-scheme:dark }
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 .wrap{max-width:980px;margin:0 auto;padding-block:20px 40px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:18px}
@@ -177,11 +186,19 @@ footer p{margin:0 0 6px}
 .mbox kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px}
 .vlog{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}
 .vlog b{font-family:var(--mono);font-weight:500}
+/* ---- v1.8 ---- */
+.cstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px;padding:10px 2px 4px;border-top:1px solid var(--line)}
+.cstats>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cstats .cv{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(11px,3.4vw,19px);font-weight:500;white-space:nowrap}
+.cstats .cv.sun{color:var(--sun)} .cstats .cv.moon{color:var(--moon)}
+.cstats .cn{font-size:12px;color:var(--muted);min-height:1.2em}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <div class="top">
-    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.7</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
+    <div class="brandrow"><h1 class="brand"><em>Himmel</em><span>ur</span><span class="ver">v1.8</span></h1><button class="infobtn" id="infobtn" aria-label="Om appen og hjelp" title="Om appen og hjelp">i</button></div>
     <div class="where">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
       <input id="city" type="text" autocomplete="off" spellcheck="false" placeholder="Skriv nærmeste by …" aria-label="Nærmeste by eller koordinater">
@@ -221,6 +238,7 @@ footer p{margin:0 0 6px}
   <section class="chartbox" aria-label="Høyde over horisonten gjennom døgnet">
     <div class="lg"><span class="label">Høyde gjennom døgnet</span><span class="grow"></span><span><i></i>Sol</span><span><i class="m"></i>Måne</span></div>
     <div class="svgwrap"><svg id="chart" viewBox="0 0 720 230" role="img" aria-label="Sol- og månehøyde over døgnet"></svg></div>
+    <div class="cstats" id="chartStats"></div>
   </section>
 
   <div class="yearbar">
@@ -284,6 +302,7 @@ footer p{margin:0 0 6px}
       <p>Knappen vises bare der nettleseren tillater posisjon, for eksempel på GitHub Pages. Inne i Claude er den skjult.</p>
       <h3>Versjoner</h3>
       <div class="vlog">
+        <b>v1.8</b><span>Rettelser: tåler ugyldig lagret sted, piltaster ignoreres når info-vinduet er åpent eller Alt, Ctrl eller Cmd holdes inne, «over horisont» skifter akkurat ved oppgang og nedgang, begge solnedgangene vises når midnattssolen tar slutt, maks høyde og daglengde står under diagrammet med lesbar tekst på mobil, kalenderen viser bare de ukene måneden trenger.</span>
         <b>v1.7</b><span>Ingen endringer i hvordan appen virker. Nå testet automatisk: astronomiberegningene er kontrollert mot Meeus sine eksempler, og klokke, kalender, sted og GPS har tester.</span>
         <b>v1.6</b><span>Kristiansand er standardby ved første besøk.</span>
         <b>v1.5</b><span>Døgnkurven står over årsslideren, og viser maks høyde for sol og måne og daglengde.</span>
@@ -406,6 +425,11 @@ function refract(h) {
   if (h < -1.5) return h;
   const hh = Math.max(h, -1);
   return h + 1.02 / Math.tan((hh + 10.3 / (hh + 5.11)) * RAD) / 60;
+}
+// Synlig høyde (med lysbrytning) når øvre kant av sola står i horisonten. Brukes som grense for «over horisont».
+const SUN_RISE_APP = refract(-0.8333);
+function riseAlt(isMoon, ms) {
+  return isMoon ? refract(-(0.5667 + Math.asin(1737.4 / moonPos(ms).dist) * DEG)) : SUN_RISE_APP;
 }
 
 const sunH = (ms, lat, lon) => horizontal(sunPos(ms), ms, lat, lon, false);
@@ -557,8 +581,20 @@ let day = null;          // beregnede døgndata
 let calView = null;      // {y,m}
 
 const DEFAULT_CITY = "Kristiansand"; // standardby ved første besøk
+function validTz(tz){ if (typeof tz !== "string" || !tz) return false; try { new Intl.DateTimeFormat("nb-NO", { timeZone: tz }); return true; } catch (e) { return false; } }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+// Renser lagret sted: ugyldige koordinater forkastes (null). Manglende eller ugyldig tidssone hentes fra nærmeste by.
+function cleanLoc(s){
+  if (!s || typeof s !== "object" || Array.isArray(s)) return null;
+  const { lat, lon } = s;
+  if (typeof lat !== "number" || typeof lon !== "number" || !(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180)) return null;
+  const c = { name: String(s.name || "Lagret sted").slice(0, 60), region: String(s.region || "").slice(0, 60), lat, lon,
+              tz: validTz(s.tz) ? s.tz : nearestCity(lat, lon).c[4] };
+  if (s.gps === true) { c.gps = true; c.acc = Number(s.acc) || 0; }
+  return c;
+}
 function loadLoc(){
-  try { const s = JSON.parse(localStorage.getItem("solmane.loc")); if (s && isFinite(s.lat)) return s; } catch(e){}
+  try { const c = cleanLoc(JSON.parse(localStorage.getItem("solmane.loc"))); if (c) return c; } catch(e){}
   const c = CITIES.find(x => x[0] === DEFAULT_CITY) || CITIES[0]; return { name:c[0], region:c[1], lat:c[2], lon:c[3], tz:c[4] };
 }
 function saveLoc(){ try { localStorage.setItem("solmane.loc", JSON.stringify(loc)); } catch(e){} }
@@ -618,6 +654,15 @@ function nextSeason(ms, ks){
 const row = (l, v, n = "", id = "") => `<dt>${l}</dt><dd${id ? ` id="${id}"` : ""}>${v}</dd><dd class="n"${id ? ` id="${id}N"` : ""}>${n}</dd>`;
 const SEP = `<div class="sep"></div>`;
 
+// Soloppgang og solnedgang som hører sammen. Når midnattssolen tar slutt kan sola gå ned to ganger samme døgn:
+// hovedtiden er da nedgangen som følger etter oppgangen, og den andre vises som «også».
+function sunPair(s){
+  const rise = s.rises.length ? s.rises[0] : null;
+  const after = rise == null ? s.sets : s.sets.filter(t => t > rise);
+  const set = s.sets.length ? (after.length ? after[0] : s.sets[0]) : null;
+  return { rise, set, alsoRise: s.rises.filter(t => t !== rise), alsoSet: s.sets.filter(t => t !== set) };
+}
+
 function renderDay(){
   const tz = loc.tz, s = day.sun, north = loc.lat >= 0;
   const df = t => { if (!t) return "–"; const p = parts(t + 30000, tz), z = n => String(n).padStart(2, "0"); return `${z(p.d)}.${z(p.m)}. ${hm(t, tz)}`; };
@@ -629,16 +674,17 @@ function renderDay(){
   $("daydiff").textContent = s.above >= 86400000 - 60000 && day.prevSun.above >= 86400000 - 60000 ? "Midnattssol"
     : s.above < 60000 && day.prevSun.above < 60000 ? "Mørketid – solen står ikke opp"
     : diff === 0 ? "Samme som dagen før" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)} min fra dagen før`;
-  const none = s.alwaysUp ? "midnattssol" : "mørketid";
+  const noEvent = other => s.alwaysUp ? "midnattssol" : !s.rises.length && !s.sets.length ? "mørketid" : other;
+  const sp = sunPair(s), alsoT = arr => arr.length ? `også ${arr.map(t => hm(t, tz)).join(", ")}` : "";
   const also = arr => arr.length > 1 ? `også ${hm(arr[1].t ?? arr[1], tz)}` : "";
   const tr = s.transits[0];
   const sol = day.solst, eq = day.equi;
   const solL = sol ? `Neste ${(sol.k === 1) === north ? "sommer" : "vinter"}solverv` : "Neste solverv";
   const eqL = eq ? `Neste ${(eq.k === 0) === north ? "vår" : "høst"}jevndøgn` : "Neste jevndøgn";
   $("sRows").innerHTML =
-      row("Soloppgang", s.rises.length ? hm(s.rises[0], tz) : "–", s.rises.length ? also(s.rises) : none)
+      row("Soloppgang", sp.rise != null ? hm(sp.rise, tz) : "–", sp.rise != null ? alsoT(sp.alsoRise) : noEvent("oppe fra natten før"))
     + row("Sol i meridian", tr ? hm(tr.t, tz) : "–")
-    + row("Solnedgang", s.sets.length ? hm(s.sets[0], tz) : "–", s.sets.length ? also(s.sets) : none)
+    + row("Solnedgang", sp.set != null ? hm(sp.set, tz) : "–", sp.set != null ? alsoT(sp.alsoSet) : noEvent("oppe ved midnatt"))
     + SEP + row("Høyde nå", "–", "", "sAlt") + row("Retning nå", "–", "", "sAz")
     + row("Maks høyde (meridian)", tr ? dec(tr.alt) + "°" : "–", tr && tr.alt < 0 ? "under horisont" : "")
     + SEP + row(solL, sol ? df(sol.t) : "–", sol ? inDays(sol.t) : "") + row(eqL, eq ? df(eq.t) : "–", eq ? inDays(eq.t) : "");
@@ -655,6 +701,12 @@ function renderDay(){
     + SEP + row("Høyde nå", "–", "", "mAlt") + row("Retning nå", "–", "", "mAz")
     + row("Maks høyde (meridian)", mt ? dec(mt.alt) + "°" : "–", mt && mt.alt < 0 ? "under horisont" : "")
     + SEP + row("Neste fullmåne", df(day.full), day.full ? inDays(day.full) : "") + row("Neste nymåne", df(day.neu), day.neu ? inDays(day.neu) : "");
+
+  const cell = (label, value, cls, note) => `<div><span class="label">${label}</span><b class="cv ${cls}">${value}</b><span class="cn">${note || ""}</span></div>`;
+  const dayNote = s.alwaysUp ? "midnattssol" : !s.rises.length && !s.sets.length ? "mørketid" : "";
+  $("chartStats").innerHTML = cell("Daglengde", dur(s.above), "sun", dayNote)
+    + cell("Sol maks", tr ? dec(tr.alt) + "°" : "–", "sun", tr && tr.alt < 0 ? "under horisont" : "")
+    + cell("Måne maks", mt ? dec(mt.alt) + "°" : "–", "moon", mt ? (mt.alt < 0 ? "under horisont" : "") : "ingen i døgnet");
 
   drawDial();
   renderYear();
@@ -748,18 +800,23 @@ function drawPhase(ph){
 }
 
 // ---- Døgnkurve ----
-const W = 720, H = 230, PL = 34, PR = 10, PT = 12, PB = 26;
+let W = 720, H = 230; // tilpasses bredden i renderChartBase
+const PL = 34, PR = 10, PT = 12, PB = 26;
 let yMin, yMax;
 const X = t => PL + (t - day.t0) / (day.t1 - day.t0) * (W - PL - PR);
 const Y = a => PT + (yMax - Math.max(yMin, Math.min(yMax, a))) / (yMax - yMin) * (H - PT - PB);
 function renderChartBase(){
+  // Tegn i omtrent virkelig størrelse, slik at tekst og tall er lesbare også på smale skjermer
+  const box = $("chart").parentNode, cw = box && box.clientWidth;
+  W = cw ? Math.round(Math.max(300, Math.min(720, cw))) : 720; H = W < 480 ? 240 : 230;
+  $("chart").setAttribute("viewBox", `0 0 ${W} ${H}`);
   const c = day.curve;
   const hi = Math.max(30, ...c.map(p => Math.max(p.s, p.m)));
   const lo = Math.min(...c.map(p => Math.min(p.s, p.m)));
   yMax = Math.ceil(hi / 15) * 15; yMin = Math.max(-90, Math.floor(Math.max(lo, -yMax * 0.6) / 15) * 15);
   let g = "";
   // natt-skygge der sola er under horisonten
-  for (let i = 0; i < c.length - 1; i++) if (c[i].s < -0.833 && c[i+1].s < -0.833)
+  for (let i = 0; i < c.length - 1; i++) if (c[i].s < SUN_RISE_APP && c[i+1].s < SUN_RISE_APP)
     g += `<rect x="${X(c[i].t).toFixed(1)}" y="${PT}" width="${(X(c[i+1].t) - X(c[i].t) + 0.4).toFixed(1)}" height="${H-PT-PB}" fill="var(--night)"/>`;
   // rutenett
   for (let a = yMin; a <= yMax; a += 15) {
@@ -774,35 +831,24 @@ function renderChartBase(){
     g += `<text x="${X(t)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">${String(h).padStart(2,"0")}</text>`;
   }
   g += `<line x1="${PL}" x2="${W-PR}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.2"/>`;
-  g += `<text x="${W-PR-2}" y="${Y(0)-5}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Figtree,sans-serif">horisont</text>`;
   const line = k => c.map((p,i) => `${i?"L":"M"}${X(p.t).toFixed(1)},${Y(p[k]).toFixed(1)}`).join("");
   // område over horisont for sol
   g += `<path d="${line("s")}L${X(c[c.length-1].t)},${Y(0)}L${X(c[0].t)},${Y(0)}Z" fill="var(--sun-soft)" opacity=".7" clip-path="url(#above)"/>`;
   g += `<defs><clipPath id="above"><rect x="0" y="0" width="${W}" height="${Y(0)}"/></clipPath></defs>`;
   g += `<path d="${line("m")}" fill="none" stroke="var(--moon)" stroke-width="2.2" stroke-dasharray="6 4" stroke-linejoin="round"/>`;
   g += `<path d="${line("s")}" fill="none" stroke="var(--sun)" stroke-width="2.6" stroke-linejoin="round"/>`;
-  // Maks høyde og daglengde
-  const lbl = (x, y, txt, col, anchor = "middle", w = 700) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" font-size="12" font-weight="${w}" fill="${col}" stroke="var(--surface)" stroke-width="4" paint-order="stroke" stroke-linejoin="round" font-family="JetBrains Mono,monospace">${txt}</text>`;
-  const clampX = x => Math.max(PL + 34, Math.min(W - PR - 34, x));
-  const peak = (tr, col, name) => {
-    if (!tr || tr.t < day.t0 || tr.t > day.t1) return "";
-    const x = X(tr.t), y = Y(tr.alt), above = y - 12 > PT + 4;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${col}"/>` + lbl(clampX(x), above ? y - 10 : y + 20, `${name} ${dec(tr.alt)}°`, col);
-  };
-  const s = day.sun;
-  let dl = "";
-  if (s.rises.length && s.sets.length) {
-    const a = s.rises[0], b = s.sets[0];
-    const cx = a < b ? (X(a) + X(b)) / 2 : (s.transits[0] ? X(s.transits[0].t) : W / 2);
-    if (a < b) {
-      const y0 = Y(0) + 6;
-      dl += `<path d="M${X(a).toFixed(1)},${y0 - 4}V${y0}H${X(b).toFixed(1)}V${y0 - 4}" fill="none" stroke="var(--sun)" stroke-width="1.4"/>`;
-    }
-    dl += lbl(clampX(cx), Y(0) + 22, `Daglengde ${dur(s.above)}`, "var(--sun)", "middle", 600);
-  } else {
-    dl += lbl((PL + W - PR) / 2, Y(0) + 22, s.alwaysUp ? "Midnattssol · 24 t" : "Mørketid · sola står ikke opp", "var(--sun)", "middle", 600);
+  // Toppunkter (tallene står i raden under diagrammet) og klamme for daglengden langs horisonten
+  const dot = (tr, col) => tr && tr.t >= day.t0 && tr.t <= day.t1
+    ? `<circle cx="${X(tr.t).toFixed(1)}" cy="${Y(tr.alt).toFixed(1)}" r="3.5" fill="${col}" stroke="var(--surface)" stroke-width="1.2"/>` : "";
+  const sp = sunPair(day.sun);
+  let br = "";
+  if (sp.rise != null && sp.set != null && sp.rise < sp.set) {
+    const y0 = Y(0) + 6;
+    br = `<path d="M${X(sp.rise).toFixed(1)},${y0 - 4}V${y0}H${X(sp.set).toFixed(1)}V${y0 - 4}" fill="none" stroke="var(--sun)" stroke-width="1.4"/>`;
   }
-  g += dl + peak(day.moon.transits[0], "var(--moon)", "↑") + peak(s.transits[0], "var(--sun)", "↑");
+  g += br + dot(day.moon.transits[0], "var(--moon)") + dot(day.sun.transits[0], "var(--sun)");
+  // «horisont» tegnes sist og med omriss, så ingen kurve skjuler teksten
+  g += `<text x="${W-PR-2}" y="${Y(0)-5}" text-anchor="end" font-size="10.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="3" paint-order="stroke" font-family="Figtree,sans-serif">horisont</text>`;
   g += `<g id="nowg"></g>`;
   $("chart").innerHTML = g;
 }
@@ -831,9 +877,9 @@ function tick(force){
     const s = sunH(t, loc.lat, loc.lon), m = moonH(t, loc.lat, loc.lon);
     const sa = refract(s.alt), ma = refract(m.alt);
     const setV = (id, v, n) => { const a = $(id), b = $(id + "N"); if (a) a.textContent = v; if (b) b.textContent = n; };
-    setV("sAlt", `${dec(sa)}°`, sa > -0.833 ? "over horisont" : "under horisont");
+    setV("sAlt", `${dec(sa)}°`, sa > riseAlt(false, t) ? "over horisont" : "under horisont");
     setV("sAz", `${dec(s.az)}°`, compass(s.az));
-    setV("mAlt", `${dec(ma)}°`, ma > -0.6 ? "over horisont" : "under horisont");
+    setV("mAlt", `${dec(ma)}°`, ma > riseAlt(true, t) ? "over horisont" : "under horisont");
     setV("mAz", `${dec(m.az)}°`, compass(m.az));
     const ph = moonPhase(t);
     $("phName").textContent = phaseName(ph.elong);
@@ -851,7 +897,7 @@ function setLoc(c){
   loc = c; saveLoc();
   $("city").value = c.name; $("err").hidden = true; $("sugg").hidden = true;
   const ns = c.lat >= 0 ? "N" : "S", ew = c.lon >= 0 ? "Ø" : "V";
-  $("coord").innerHTML = `<span><b>${c.name}</b>${c.region ? ", " + c.region : ""}</span><span class="num">${dec(Math.abs(c.lat),3)}° ${ns}, ${dec(Math.abs(c.lon),3)}° ${ew}</span>${c.gps ? `<span>GPS ±${c.acc < 1000 ? Math.round(c.acc) + " m" : dec(c.acc / 1000) + " km"}</span>` : ""}`;
+  $("coord").innerHTML = `<span><b>${esc(c.name)}</b>${c.region ? ", " + esc(c.region) : ""}</span><span class="num">${dec(Math.abs(c.lat),3)}° ${ns}, ${dec(Math.abs(c.lon),3)}° ${ew}</span>${c.gps ? `<span>GPS ±${c.acc < 1000 ? Math.round(c.acc) + " m" : dec(c.acc / 1000) + " km"}</span>` : ""}`;
   lastMin = -1; computeDay();
 }
 function matches(q){
@@ -964,7 +1010,7 @@ function renderCal(){
       h += `<button type="button" class="${cls}" data-d="${Y}-${M}-${D}" aria-label="${D}. ${MONTHS[M-1]} ${Y}">${D}</button>`;
       dt.setUTCDate(D + 1);
     }
-    if (dt.getUTCMonth()+1 !== m && w >= 4) break;
+    if (dt.getUTCMonth()+1 !== m) break;
   }
   $("grid").innerHTML = h;
 }
@@ -980,8 +1026,9 @@ function resetToday(){ pickDate(...Object.values(todayYMD())); }
 function stepDay(n){ const c = curYMD(); pickDate(...(n > 0 ? nextDay(c.y, c.m, c.d) : prevDay(c.y, c.m, c.d))); }
 $("prevday").onclick = () => stepDay(-1); $("nextday").onclick = () => stepDay(1);
 document.addEventListener("keydown", e => {
-  if (e.target.closest && e.target.closest("input")) return;
-  if (!$("cal").hidden) return;
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← er «tilbake» i nettleseren
+  if (e.target.closest && e.target.closest("input, textarea, select")) return;
+  if (!$("cal").hidden || !$("info").hidden) return;
   if (e.key === "ArrowLeft") stepDay(-1); else if (e.key === "ArrowRight") stepDay(1);
 });
 $("timebtn").addEventListener("click", () => $("cal").hidden ? openCal() : closeCal());
@@ -1007,6 +1054,13 @@ function closeInfo(){ $("info").hidden = true; $("infobtn").focus(); }
 $("infobtn").onclick = openInfo; $("infoclose").onclick = closeInfo;
 $("info").addEventListener("click", e => { if (e.target.id === "info") closeInfo(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("info").hidden) closeInfo(); });
+
+// Tegn diagrammet på nytt når vinduet endrer størrelse (f.eks. mobil som snur)
+let rzRaf = 0;
+window.addEventListener("resize", () => {
+  cancelAnimationFrame(rzRaf);
+  rzRaf = requestAnimationFrame(() => { if (day) { renderChartBase(); tick(true); } });
+});
 
 // ---- Start ----
 setLoc(loadLoc());
